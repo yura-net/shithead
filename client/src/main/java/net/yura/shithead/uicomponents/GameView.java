@@ -234,7 +234,7 @@ public class GameView extends Panel {
      * these 2 methods calculate the line on which the other players sit on
      */
     int getRadiusX() {
-        return width / 2 - XULLoader.adjustSizeToDensity(75); // 15 works well with rotation
+        return width / 2 - XULLoader.adjustSizeToDensity(15);
     }
     int getRadiusY() {
         return Math.max(
