@@ -9,12 +9,12 @@ java {
 
 dependencies {
     implementation rootProject
-    api 'org.swingme:swingme:1.8.0'
+    api 'org.swingme:swingme:1.8.1'
     implementation 'org.apache.commons:commons-collections4:4.5.0'
-    implementation 'net.yura:lobby-client-mini-ui:1.0.0'
+    implementation 'net.yura:lobby-client-mini-ui:1.0.1'
 
     // these are needed for compile only, the actual versions used are specific to android/ios
-    compileOnly 'org.swingme:me4se-midletrunner:4.0.0'
+    compileOnly 'org.swingme:me4se-midletrunner:4.1.0'
 
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.2'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.10.2'
