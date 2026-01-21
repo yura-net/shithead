@@ -29,7 +29,7 @@
 	<key>MOE.Main.Class</key>
 	<string>net.yura.ios.SwingMEiOSApplication</string>
 	<key>SwingME.Main.Class</key>
-	<string>net.yura.shithead.client.ShitHeadApplication</string>
+	<string>net.yura.shithead.ios.ShitheadiOSApp</string>
 	<key>UIApplicationExitsOnSuspend</key>
 	<false/>
 	<key>UILaunchStoryboardName</key>

@@ -44,11 +44,8 @@ public class MiniLobbyShithead implements MiniLobbyGame {
     @Override
     public void addLobbyGameMoveListener(MiniLobbyClient lgl) {
         lobby = lgl;
-    }
 
-    @Override
-    public Properties getProperties() {
-        return strings;
+        lobby.getChatButton().setVisible(false);
     }
 
     @Override
@@ -112,7 +109,7 @@ public class MiniLobbyShithead implements MiniLobbyGame {
 
     @Override
     public void prepareAndOpenGame(Game game) {
-        lobby.mycom.playGame(game.getId());
+        lobby.mycom.openGame(game.getId());
     }
 
     // not used, only used when byte[] are read with java serialisation into an object
@@ -189,12 +186,8 @@ public class MiniLobbyShithead implements MiniLobbyGame {
         }
     }
 
-    /**
-     * this is actually userLogin method, can get called multiple times
-     * TODO name is updated in next version of lobby
-     */
     @Override
-    public void connected(String username) {
+    public void userLogin(String username) {
         GameUI openGameUI = this.openGameUI;
         if (openGameUI != null) {
             openGameUI.setMyUsername(username);
@@ -254,6 +247,22 @@ public class MiniLobbyShithead implements MiniLobbyGame {
     @Override
     public void showMessage(String fromwho, String message) {
         MiniLobbyClient.toast(fromwho != null ? fromwho + ": " + message : message);
+    }
+
+
+    @Override
+    public void playerRenamed(String oldName, String newName) {
+
+    }
+
+    @Override
+    public void playerAdded(String name) {
+
+    }
+
+    @Override
+    public void playerRemoved(String name) {
+
     }
 
     @Override

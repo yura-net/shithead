@@ -17,6 +17,9 @@ import net.yura.mobile.gui.Animation;
 import net.yura.mobile.gui.Application;
 import net.yura.mobile.gui.DesktopPane;
 import net.yura.mobile.gui.Icon;
+import net.yura.mobile.gui.border.BackgroundBorder;
+import net.yura.mobile.gui.border.Border;
+import net.yura.mobile.gui.border.EdgeToEdgeBorder;
 import net.yura.mobile.gui.components.Button;
 import net.yura.mobile.gui.components.Frame;
 import net.yura.mobile.gui.components.OptionPane;
@@ -36,6 +39,8 @@ import javax.microedition.lcdui.Image;
 public class ShitHeadApplication extends Application implements ActionListener {
 
     private static final String SINGLE_PLAYER_NAME = "Player 1";
+
+    static final Border background = new EdgeToEdgeBorder(new BackgroundBorder(createImageNoScale("/table.jpg")));
 
     private Properties properties;
 
@@ -63,6 +68,7 @@ public class ShitHeadApplication extends Application implements ActionListener {
         Animation.FPS = 30;
 
         setupTheme(dp);
+        MiniLobbyClient.loadThemeExtension();
 
         ResourceBundle bundle = ResourceBundle.getBundle("game_text");
         properties = new Properties() {
@@ -106,6 +112,10 @@ public class ShitHeadApplication extends Application implements ActionListener {
         }
 
         Frame frame = (Frame)loader.getRoot();
+
+        frame.setBackground(0x00FFFFFF); // force override
+        frame.setBorder(background);
+
         frame.setMaximum(true);
         frame.setVisible(true);
     }
