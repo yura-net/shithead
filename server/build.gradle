@@ -9,7 +9,7 @@ java {
 
 dependencies {
     implementation rootProject
-    def lobbyServer = 'net.yura:lobby-server:1.0.0'
+    def lobbyServer = 'net.yura:lobby-server:1.1.0'
     compileOnly lobbyServer
 
     testImplementation lobbyServer

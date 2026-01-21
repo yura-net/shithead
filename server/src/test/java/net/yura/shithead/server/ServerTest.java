@@ -77,11 +77,8 @@ public class ServerTest {
     private static MockClient mockClient1;
     private static MockClient mockClient2;
 
-    // TODO when updated to next server version, can change this back to BeforeAll/AfterAll
-    // currently the rename player test messes up other tests as its not possible to reset
-    //@BeforeAll
-    @BeforeEach
-    public void setupServer() throws Exception {
+    @BeforeAll
+    public static void setupServer() throws Exception {
 
         server = TestServer.startTestServer(0);
 
@@ -89,9 +86,8 @@ public class ServerTest {
         mockClient2 = new MockClient(PLAYER_2_NAME, Player.PLAYER_GUEST);
     }
 
-    //@AfterAll
-    @AfterEach
-    public void stopServer() {
+    @AfterAll
+    public static void stopServer() {
         mockClient1.close();
         mockClient1 = null;
         mockClient2.close();
@@ -130,11 +126,11 @@ public class ServerTest {
         assertEquals(2, game.getNumOfPlayers());
         assertEquals(2, game.getMaxPlayers());
 
-        mockClient1.connection.playGame(game.getId());
+        mockClient1.connection.openGame(game.getId());
         Object gameObj1 = messageForGame(mockClient1.clientMock, game.getId());
         mockClient1.setGame(gameObj1);
 
-        mockClient2.connection.playGame(game.getId());
+        mockClient2.connection.openGame(game.getId());
         Object gameObj2 = messageForGame(mockClient2.clientMock, game.getId());
         mockClient2.setGame(gameObj2);
 
@@ -197,16 +193,18 @@ public class ServerTest {
         String newName = "new name";
         mockClient1.connection.setNick(newName);
 
-        // get the rename command from both players
-        Object rename1 = messageForGame(mockClient1.clientMock, gameId);
-        Object rename2 = messageForGame(mockClient2.clientMock, gameId);
+        try {
+            // get the rename command from both players
+            Object rename1 = messageForGame(mockClient1.clientMock, gameId);
+            Object rename2 = messageForGame(mockClient2.clientMock, gameId);
 
-        assertEquals("rename " + PLAYER_1_NAME + " new+name", rename1);
-        assertEquals("rename " + PLAYER_1_NAME + " new+name", rename2);
-
-        // now reset it
-        // TODO broken on current version of lobby server, fixed in next version
-        //server.getLobbyController().lobby.setNick(newName, "test-normal");
+            assertEquals("rename " + PLAYER_1_NAME + " new+name", rename1);
+            assertEquals("rename " + PLAYER_1_NAME + " new+name", rename2);
+        }
+        finally {
+            // now reset it
+            server.getLobbyController().lobby.setNick(newName, "test-normal");
+        }
     }
 
 

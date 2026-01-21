@@ -58,7 +58,8 @@ public class GameUI implements ActionListener, GameViewListener {
         Frame frame = (Frame)loader.getRoot();
         menu = (Menu) loader.find("menu");
 
-
+        frame.setBackground(0x00FFFFFF); // force override
+        frame.setBorder(ShitHeadApplication.background);
 
         frame.setMaximum(true);
         frame.revalidate();

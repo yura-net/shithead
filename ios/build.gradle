@@ -1,6 +1,7 @@
 buildscript {
     repositories {
         mavenCentral()
+        maven { url 'https://central.sonatype.com/repository/maven-snapshots/' }
         mavenLocal()
     }
     dependencies {
@@ -36,7 +37,7 @@ moe {
 
 dependencies {
     implementation project(':client')
-    implementation 'org.swingme:swingme-binding-ios:1.0.0'
+    implementation 'org.swingme:swingme-binding-ios:1.1.0'
 }
 
 task extractFileFromJar(type: Copy) {
@@ -48,6 +49,9 @@ task extractFileFromJar(type: Copy) {
     }
     includeEmptyDirs = false
     into projectDir
+
+    // otherwise gradle thinks compileJava depends on this task
+    mustRunAfter("compileJava")
 }
 
 moeMainReleaseProGuard {
