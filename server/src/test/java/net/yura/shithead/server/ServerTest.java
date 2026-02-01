@@ -68,6 +68,10 @@ public class ServerTest {
         public void mutateGame(Object mutation) {
             new CommandParser().execute(game, (String) mutation);
         }
+
+        private void resignGame(int id) {
+            connection.leaveGame(id);
+        }
     }
 
     private static MockClient mockClient1;
@@ -141,7 +145,29 @@ public class ServerTest {
     public void test2PlayersJoinGame() {
         int id = bothPlayersJoinGame();
 
+        readyPlayersForGame(id);
+
         int maxTurns = 200;
+        int turns = 0;
+        while (!mockClient1.game.isFinished() || !mockClient2.game.isFinished()) {
+            assertEquals(mockClient1.game.isFinished(), mockClient2.game.isFinished());
+
+            String whosTurn = mockClient1.game.getCurrentPlayer().getName();
+            if (mockClient1.username.equals(whosTurn)) {
+                sendGameMessage(mockClient1, id, AutoPlay.getValidGameCommand(mockClient1.game));
+            }
+            else if (mockClient2.username.equals(whosTurn)) {
+                sendGameMessage(mockClient2, id, AutoPlay.getValidGameCommand(mockClient2.game));
+            }
+            else {
+                throw new IllegalStateException("whos turn??? " + whosTurn);
+            }
+            assertTrue(turns++ < maxTurns);
+        }
+    }
+
+    private void readyPlayersForGame(int id) {
+        int maxTurns = 50;
         int turns = 0;
         while (mockClient1.game.isRearranging() || mockClient2.game.isRearranging()) {
             assertEquals(mockClient1.game.isRearranging(), mockClient2.game.isRearranging());
@@ -161,31 +187,6 @@ public class ServerTest {
             }
             assertTrue(turns++ < maxTurns);
         }
-
-        turns = 0;
-        while (!mockClient1.game.isFinished() || !mockClient2.game.isFinished()) {
-            assertEquals(mockClient1.game.isFinished(), mockClient2.game.isFinished());
-
-            String whosTurn = mockClient1.game.getCurrentPlayer().getName();
-            if (mockClient1.username.equals(whosTurn)) {
-                sendGameMessage(mockClient1, id, AutoPlay.getValidGameCommand(mockClient1.game));
-            }
-            else if (mockClient2.username.equals(whosTurn)) {
-                sendGameMessage(mockClient2, id, AutoPlay.getValidGameCommand(mockClient2.game));
-            }
-            else {
-                throw new IllegalStateException("whos turn??? " + whosTurn);
-            }
-            assertTrue(turns++ < maxTurns);
-        }
-    }
-
-    private void sendGameMessage(MockClient mockClient, int id, String command) {
-        mockClient.connection.sendGameMessage(id, command);
-        Object mutation1 = messageForGame(mockClient1.clientMock, id);
-        mockClient1.mutateGame(mutation1);
-        Object mutation2 = messageForGame(mockClient2.clientMock, id);
-        mockClient2.mutateGame(mutation2);
     }
 
     @Test
@@ -209,6 +210,57 @@ public class ServerTest {
     }
 
 
+    @Test
+    public void testPlayerResignsDuringSetupPhase() {
+        int id = bothPlayersJoinGame();
+
+        assertTrue(mockClient1.game.isRearranging());
+
+        mockClient1.resignGame(id);
+
+        applyGameMessages(id, 2);
+
+        String resignedName = PLAYER_1_NAME + "-Resigned";
+        assertNotNull(mockClient1.game.getPlayer(resignedName));
+        assertTrue(mockClient1.game.isRearranging());
+        boolean resignedPlayerReady = mockClient1.game.getPlayersReady().stream()
+                .anyMatch(player -> resignedName.equals(player.getName()));
+        assertTrue(resignedPlayerReady);
+    }
+
+    @Test
+    public void testPlayerResignsDuringTheirTurn() {
+        int id = bothPlayersJoinGame();
+        readyPlayersForGame(id);
+
+        String currentPlayer = mockClient1.game.getCurrentPlayer().getName();
+        MockClient resigningClient = PLAYER_1_NAME.equals(currentPlayer) ? mockClient1 : mockClient2;
+
+        resigningClient.resignGame(id);
+        applyNextGameMessage(id);
+
+        String resignedName = currentPlayer + "-Resigned";
+        assertNotNull(mockClient1.game.getPlayer(resignedName));
+        assertEquals(resignedName, mockClient1.game.getCurrentPlayer().getName());
+        assertTrue(mockClient1.game.isPlaying());
+    }
+
+    @Test
+    public void testPlayerResignsDuringOtherPlayersTurn() {
+        int id = bothPlayersJoinGame();
+        readyPlayersForGame(id);
+
+        String currentPlayer = mockClient1.game.getCurrentPlayer().getName();
+        MockClient resigningClient = PLAYER_1_NAME.equals(currentPlayer) ? mockClient2 : mockClient1;
+
+        resigningClient.resignGame(id);
+        applyNextGameMessage(id);
+
+        String resignedName = resigningClient.username + "-Resigned";
+        assertNotNull(mockClient1.game.getPlayer(resignedName));
+        assertEquals(currentPlayer, mockClient1.game.getCurrentPlayer().getName());
+        assertTrue(mockClient1.game.isPlaying());
+    }
 
 
     private static GameType getGameTypeFromServer(LobbyClient mockClient, String name) {
@@ -227,10 +279,33 @@ public class ServerTest {
         return gameCaptor.getValue();
     }
 
+    private void sendGameMessage(MockClient mockClient, int id, String command) {
+        mockClient.connection.sendGameMessage(id, command);
+        applyNextGameMessage(id);
+    }
+
+    private void applyNextGameMessage(int id) {
+        applyGameMessages(id, 1);
+    }
+
+    private void applyGameMessages(int id, int expectedCount) {
+        List<Object> mutations1 = messageForGame(mockClient1.clientMock, id, expectedCount);
+        List<Object> mutations2 = messageForGame(mockClient2.clientMock, id, expectedCount);
+
+        for (int i = 0; i < expectedCount; i++) {
+            mockClient1.mutateGame(mutations1.get(i));
+            mockClient2.mutateGame(mutations2.get(i));
+        }
+    }
+
     private static Object messageForGame(LobbyClient mockClient, int id) {
+        return messageForGame(mockClient, id, 1).get(0);
+    }
+
+    private static List<Object> messageForGame(LobbyClient mockClient, int id, int expectedCount) {
         ArgumentCaptor<Object> gameCaptor = ArgumentCaptor.forClass(Object.class);
-        verify(mockClient, TIMEOUT).messageForGame(eq(id), gameCaptor.capture());
+        verify(mockClient, TIMEOUT.times(expectedCount)).messageForGame(eq(id), gameCaptor.capture());
         clearInvocations(mockClient);
-        return gameCaptor.getValue();
+        return gameCaptor.getAllValues();
     }
 }

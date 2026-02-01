@@ -1,7 +1,6 @@
 ## TODO
 
-- animations are too slow on big screens
-- when online game finishes the notification says null won the game
+- get push working in iOS and android
 
 - maybe do length along curve instead of angle to get other player position
 - some animations take card from deck when they should take it from the player
@@ -12,6 +11,29 @@ nice to have/maybe:
 - rules description on new game screen
 - support a few autoplays before a players is resigned from the game
 - share username with domination game, so users can use same name on both
+
+rule variations:
+
+- each rule being togglable
+- allow clicking wrong card, to trigger a pickup
+- transparent 8
+- 7 go low
+- King can reverse order
+- alternative cartoon theme for game
+- sound effects
+- end of game animation and effects
+
+
+
+new name:
+- Sh!thead
+- Sh*thead
+- craphead
+- Karma
+- Shed
+
+names already taken by other games:
+- Sheethead, Palace, Idiot
 
 # Shithead Rule Discrepancies (vs. Wikipedia)
 
