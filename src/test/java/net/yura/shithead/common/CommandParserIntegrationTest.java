@@ -32,7 +32,12 @@ public class CommandParserIntegrationTest {
         }
 
         assertTrue(game.isFinished(), "Game should be finished After the hardcoded sequence of moves.");
-        assertEquals(1, game.getPlayers().size(), "There should be only one player left (the winner).");
+        assertEquals(1, game.getPlayers().size(), "There should be only one player left.");
+
+        Player loser = game.getPlayers().get(0);
+        assertEquals("[7H, 9H, 9C, 5D, 5C, 6H, JH, KD, KS, KC, AH]", loser.getHand().toString());
+        assertEquals("[]", loser.getUpcards().toString());
+        assertEquals("[AD, 2D]", loser.getDowncards().toString());
     }
 
     @Test
@@ -53,7 +58,12 @@ public class CommandParserIntegrationTest {
         }
 
         assertTrue(game.isFinished(), "Game should be finished After the hardcoded sequence of moves.");
-        assertEquals(1, game.getPlayers().size(), "There should be only one player left (the winner).");
+        assertEquals(1, game.getPlayers().size(), "There should be only one player left.");
+
+        Player loser = game.getPlayers().get(0);
+        assertEquals("[QS, QS, QC]", loser.getHand().toString());
+        assertEquals("[3S]", loser.getUpcards().toString());
+        assertEquals("[7D, KC, KH]", loser.getDowncards().toString());
     }
 
     @Test
