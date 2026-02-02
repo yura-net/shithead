@@ -14,6 +14,8 @@ nice to have/maybe:
 
 rule variations:
 
+- select number of hidden cards (maybe select number of visible cards)
+- use more then 1 deck of cards
 - each rule being togglable
 - allow clicking wrong card, to trigger a pickup
 - transparent 8

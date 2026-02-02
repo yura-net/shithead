@@ -36,6 +36,27 @@ public class CommandParserIntegrationTest {
     }
 
     @Test
+    public void testHardcoded2DeckGame() throws Exception {
+        CommandParser parser = new CommandParser();
+        ShitheadGame game = new ShitheadGame(6, new Deck(2));
+        Deck deck = game.getDeck();
+        deck.setRandom(new Random(123)); // Fixed seed for predictable game
+        game.deal();
+
+        List<String> commands = Files.readAllLines(Path.of(getClass().getResource("/2decks-game-sequence.txt").toURI()));
+
+        for (String command : commands) {
+            if (game.isFinished()) {
+                fail("command not needed: " + command);
+            }
+            parser.parse(game, command);
+        }
+
+        assertTrue(game.isFinished(), "Game should be finished After the hardcoded sequence of moves.");
+        assertEquals(1, game.getPlayers().size(), "There should be only one player left (the winner).");
+    }
+
+    @Test
     public void testSpectatorGame() throws Exception {
         // Setup a game to a certain point
         CommandParser parser = new CommandParser();

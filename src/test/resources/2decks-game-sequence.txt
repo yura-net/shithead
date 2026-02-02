@@ -1,0 +1,156 @@
+ready Player+1
+ready Player+2
+ready Player+3
+ready Player+4
+ready Player+5
+ready Player+6
+play hand XS
+play hand 6H
+play hand 7D
+play hand 8S
+play hand 9C
+play deck
+play hand 5S
+play hand QD
+play hand XC
+play hand XD
+play hand JC JH
+play hand QS
+play hand QC
+play deck
+play hand 3H
+play hand 4H 4C
+play hand 8C
+play hand 8H
+play hand KD
+play deck
+play hand 5C
+play hand JS
+play hand QD
+play deck
+play hand 2D
+play hand 3H
+play hand 6S
+play hand QC
+play hand 2C
+play hand 4D
+play hand 7S
+play hand 8H 8C 8H
+play hand 8D
+play hand KS
+play hand AD
+play deck
+play hand 5S
+play hand 6C
+play hand 6D 6S
+play hand 9D
+play hand AH
+play hand AD
+play deck
+play hand 3C 3H
+play hand 4H 4C
+play hand AC
+play hand 2C
+play hand 4S
+play hand 5S
+play hand XS
+play hand 5H
+play hand 5H
+play hand 2D
+play hand 7C
+play hand 9C
+play hand 9D 9D
+play hand JD JH JS
+play hand JC JH
+play hand 9S
+play hand QH
+play hand XD
+play hand 4H
+play hand 6H 6D
+play hand 6C 6C 6D 6S
+play hand 7C
+play hand 9S
+play hand QS QC
+pickup
+play hand KC
+play hand KS
+play hand KH
+play up AD
+pickup
+play hand 3S 3C
+play up 4C
+play up 7H
+play hand AH
+pickup
+play hand KD KC KS KH
+play hand AD
+pickup
+play up JC
+play up JD
+play hand AD
+play hand AH
+play up 2H
+play hand 7C
+play up AS
+pickup
+play up 7S 7H
+play hand 7H
+play up 8D
+play hand 9S
+play down 0
+play hand 7C
+play up 2H
+play hand 3S 3C
+play up 5D
+play hand QS QC
+pickup
+play hand JC JD
+play down 0
+play hand 4C
+play down 0
+play hand AD
+play hand 2H
+play hand AD
+pickup
+play up 9H 9H
+pickup
+play up 4S
+play hand 5C 5D
+play hand AH
+play hand AD
+play down 0
+play hand 3D
+play up 8C
+play hand 8D
+play hand AS
+play hand AD
+play down 0
+play down 0
+pickup
+play up AS
+pickup
+play hand 2H
+play hand 5D
+play hand 9H 9H
+play down 0
+play hand QS QC
+pickup
+play hand JC JD
+play hand KS
+play down 0
+play hand 3S 3C
+play hand 5D
+play hand 2H
+play hand 4C
+play down 0
+play hand 7S 7H 7H 7C
+play hand 9S
+play hand 9H 9H
+play down 0
+play down 0
+play hand AS
+play hand 2H
+play down 0
+play down 0
+play down 0
+play down 0
