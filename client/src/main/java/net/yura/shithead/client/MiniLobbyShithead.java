@@ -44,11 +44,8 @@ public class MiniLobbyShithead implements MiniLobbyGame {
     @Override
     public void addLobbyGameMoveListener(MiniLobbyClient lgl) {
         lobby = lgl;
-    }
 
-    @Override
-    public Properties getProperties() {
-        return strings;
+        lobby.getChatButton().setVisible(false);
     }
 
     @Override
@@ -231,6 +228,22 @@ public class MiniLobbyShithead implements MiniLobbyGame {
     @Override
     public void showMessage(String fromwho, String message) {
         MiniLobbyClient.toast(fromwho != null ? fromwho + ": " + message : message);
+    }
+
+
+    @Override
+    public void playerRenamed(String oldName, String newName) {
+
+    }
+
+    @Override
+    public void playerAdded(String name) {
+
+    }
+
+    @Override
+    public void playerRemoved(String name) {
+
     }
 
     @Override
