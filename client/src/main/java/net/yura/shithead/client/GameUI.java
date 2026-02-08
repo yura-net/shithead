@@ -2,6 +2,7 @@ package net.yura.shithead.client;
 
 import net.yura.cardsengine.Card;
 import net.yura.mobile.gui.ActionListener;
+import net.yura.mobile.gui.Application;
 import net.yura.mobile.gui.components.Button;
 import net.yura.mobile.gui.components.Frame;
 import net.yura.mobile.gui.components.Menu;
@@ -64,6 +65,14 @@ public class GameUI implements ActionListener, GameViewListener {
         frame.setMaximum(true);
         frame.revalidate();
         frame.setVisible(true);
+
+        wakelock(true);
+    }
+
+    private void wakelock(boolean wakelock) {
+        if (Application.getPlatform() == Application.PLATFORM_ANDROID || Application.getPlatform() == Application.PLATFORM_IOS) {
+            Application.openURL("wakelock://" + wakelock);
+        }
     }
 
     public Menu getMenu() {
@@ -153,6 +162,8 @@ public class GameUI implements ActionListener, GameViewListener {
 
     public void close() {
         gameView.getWindow().setVisible(false);
+
+        wakelock(false);
     }
 
     public void newCommand(String message) {
