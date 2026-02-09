@@ -123,12 +123,13 @@ public class MiniLobbyShithead implements MiniLobbyGame {
     public void stringForGame(String message) {
         if (openGameUI == null) {
             ShitheadGame onlineGame = SerializerUtil.fromJSON(message);
-            openGameUI = new GameUI(strings, onlineGame, lobby.whoAmI(), new ActionListener() {
+            openGameUI = new GameUI(strings, onlineGame, new ActionListener() {
                 @Override
                 public void actionPerformed(String gameAction) {
                     lobby.sendGameMessage(gameAction);
                 }
             });
+            openGameUI.setMyUsername(lobby.whoAmI());
             openGameUI.setTitle(lobby.getCurrentOpenGame().getName());
             ActionListener actionListener = new ActionListener() {
                 @Override
@@ -152,6 +153,8 @@ public class MiniLobbyShithead implements MiniLobbyGame {
 
             openGameUI.closeActionListener = actionListener;
             openGameUI.getMenu().setVisible(true);
+            // since we just made this component visible, we need to relayout the frame
+            openGameUI.getMenu().getWindow().revalidate();
 
             Button chatButton = new Button(strings.getProperty("lobby.room.chat"));
             chatButton.setActionCommand("chat");
@@ -176,8 +179,18 @@ public class MiniLobbyShithead implements MiniLobbyGame {
         }
     }
 
+    /**
+     * this is actually userLogin method, can get called multiple times
+     * TODO name is updated in next version of lobby
+     */
     @Override
     public void connected(String username) {
+        GameUI openGameUI = this.openGameUI;
+        if (openGameUI != null) {
+            openGameUI.setMyUsername(username);
+        }
+
+
         // dont need to do anything
     }
 

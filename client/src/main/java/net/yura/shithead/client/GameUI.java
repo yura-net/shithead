@@ -34,11 +34,10 @@ public class GameUI implements ActionListener, GameViewListener {
 
     // game properties
     final ShitheadGame game;
-    private final String playerUsername;
+    private String playerUsername;
 
-    public GameUI(Properties properties, ShitheadGame game, String playerUsername, ActionListener gameCommandActionListener) {
+    public GameUI(Properties properties, ShitheadGame game, ActionListener gameCommandActionListener) {
         this.game = game;
-        this.playerUsername = playerUsername;
         this.gameCommandListener = gameCommandActionListener;
         this.uiTextString = properties;
 
@@ -52,7 +51,7 @@ public class GameUI implements ActionListener, GameViewListener {
 
         gameView = (GameView) loader.find("game_view");
         gameView.setGameCommandListener(this);
-        gameView.setGame(game, playerUsername);
+        gameView.setGame(game);
         gameView.setTitle(properties.getProperty("app.title"));
         playButton = (Button) loader.find("play_button");
         updateButton();
@@ -67,6 +66,11 @@ public class GameUI implements ActionListener, GameViewListener {
         frame.setVisible(true);
 
         wakelock(true);
+    }
+
+    public void setMyUsername(String playerUsername) {
+        this.playerUsername = playerUsername;
+        gameView.setMyUsername(playerUsername);
     }
 
     private void wakelock(boolean wakelock) {

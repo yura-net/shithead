@@ -124,6 +124,7 @@ public class ShitHeadApplication extends Application implements ActionListener {
             gameSetupLoader.find("TimeoutValue").setVisible(false);
             gameSetupLoader.find("private").setVisible(false);
             gameSetupLoader.find("password").setVisible(false);
+            gameSetupLoader.find("players").setValue(5);
 
             Frame dialog = (Frame)gameSetupLoader.getRoot();
             dialog.pack();
@@ -188,7 +189,7 @@ public class ShitHeadApplication extends Application implements ActionListener {
         this.singlePlayerGame = game;
         Player me = game.getPlayer(SINGLE_PLAYER_NAME);
 
-        final GameUI gameUI = new GameUI(properties, singlePlayerGame, SINGLE_PLAYER_NAME, new ActionListener() {
+        final GameUI gameUI = new GameUI(properties, singlePlayerGame, new ActionListener() {
             @Override
             public void actionPerformed(String actionCommand) {
                 CommandParser parser = new CommandParser();
@@ -217,6 +218,7 @@ public class ShitHeadApplication extends Application implements ActionListener {
                 }.start();
             }
         });
+        gameUI.setMyUsername(SINGLE_PLAYER_NAME);
         gameUI.closeActionListener = new ActionListener() {
             @Override
             public void actionPerformed(String actionCommand) {

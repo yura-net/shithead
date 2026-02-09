@@ -47,8 +47,11 @@ public class GameView extends Panel {
         this.gameCommandListener = gameCommandListener;
     }
 
-    public void setGame(ShitheadGame game, String playerID) {
+    public void setGame(ShitheadGame game) {
         this.game = game;
+    }
+
+    public void setMyUsername(String playerID) {
         this.myUsername = playerID;
         layoutCards();
         repaint();

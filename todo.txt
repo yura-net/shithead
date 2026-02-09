@@ -1,6 +1,5 @@
 ## TODO
 
-- bug: when someone else renames you and you have the game open, it thinks you are spectating
 - get push working in iOS and android
 
 - maybe do length along curve instead of angle to get other player position
