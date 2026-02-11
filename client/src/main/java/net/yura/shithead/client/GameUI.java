@@ -54,7 +54,6 @@ public class GameUI implements ActionListener, GameViewListener {
         gameView.setGame(game);
         gameView.setTitle(properties.getProperty("app.title"));
         playButton = (Button) loader.find("play_button");
-        updateButton();
 
         Frame frame = (Frame)loader.getRoot();
         menu = (Menu) loader.find("menu");
@@ -71,6 +70,7 @@ public class GameUI implements ActionListener, GameViewListener {
     public void setMyUsername(String playerUsername) {
         this.playerUsername = playerUsername;
         gameView.setMyUsername(playerUsername);
+        updateButton();
     }
 
     private void wakelock(boolean wakelock) {

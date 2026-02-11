@@ -20,6 +20,7 @@ import net.yura.mobile.gui.Icon;
 import net.yura.mobile.gui.components.Button;
 import net.yura.mobile.gui.components.Frame;
 import net.yura.mobile.gui.components.OptionPane;
+import net.yura.mobile.gui.components.Panel;
 import net.yura.mobile.gui.components.Spinner;
 import net.yura.mobile.gui.components.TextComponent;
 import net.yura.mobile.gui.components.Window;
@@ -97,18 +98,7 @@ public class ShitHeadApplication extends Application implements ActionListener {
 
     public void actionPerformed(String actionCommand) {
         if ("multiplayer".equals(actionCommand)) {
-            if (minilobby == null) {
-                minilobby = new MiniLobbyClient(new MiniLobbyShithead(properties));
-                minilobby.addCloseListener(this);
-            }
-            minilobby.connect(MiniLobbyClient.LOBBY_SERVER);
-
-            // TODO to avoid warning in logs we should remove minilobby from any current parent
-
-            Frame frame = (Frame)DesktopPane.getDesktopPane().getSelectedFrame();
-            frame.setContentPane(minilobby.getRoot());
-            frame.revalidate();
-            frame.repaint();
+            openLobby();
         }
         else if ("singleplayer".equals(actionCommand)) {
 
@@ -160,13 +150,33 @@ public class ShitHeadApplication extends Application implements ActionListener {
 
         }
         else if (Frame.CMD_CLOSE.equals(actionCommand)) { // close the lobby
-            Window frame = minilobby.getRoot().getWindow();
+            Panel lobbyUI = minilobby.getRoot();
+            Window frame = lobbyUI.getWindow();
             frame.setVisible(false);
+            // to avoid warning in logs we should remove minilobby from any current parent
+            frame.remove(lobbyUI);
             openMainMenu();
         }
         else {
             System.out.println("unknown command: " + actionCommand);
         }
+    }
+
+    private void openLobby() {
+        if (minilobby == null) {
+            minilobby = new MiniLobbyClient(new MiniLobbyShithead(properties));
+            minilobby.addCloseListener(this);
+        }
+        minilobby.connect(MiniLobbyClient.LOBBY_SERVER);
+
+        // TODO we dont know whos frame this is, what if its a game frame OVER the main manu frame??
+        // TODO or a about dialog????
+        // TODO or a new game dialog even????
+
+        Frame frame = (Frame)DesktopPane.getDesktopPane().getSelectedFrame();
+        frame.setContentPane(minilobby.getRoot());
+        frame.revalidate();
+        frame.repaint();
     }
 
     private void createNewGame(int numPlayers) {
