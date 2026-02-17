@@ -12,6 +12,13 @@ nice to have/maybe:
 - support a few autoplays before a players is resigned from the game
 - share username with domination game, so users can use same name on both
 
+
+- cards look a bit small
+  - could cards be bigger if you have less cards in your hand
+  - could card size scale up if less players playing
+
+
+
 rule variations:
 
 - select number of hidden cards (maybe select number of visible cards)

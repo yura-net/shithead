@@ -130,7 +130,17 @@ public class MiniLobbyShithead implements MiniLobbyGame {
                 }
             });
             openGameUI.setMyUsername(lobby.whoAmI());
-            openGameUI.setTitle(lobby.getCurrentOpenGame().getName());
+
+            // TODO getCurrentOpenGame does not work when opened from notification!!!
+            Game maybeOpenGame = null;
+            try {
+                maybeOpenGame = lobby.getCurrentOpenGame();
+            }
+            catch (Exception ex) {
+                ex.printStackTrace();
+            }
+
+            openGameUI.setTitle(maybeOpenGame == null ? "Online Game" : maybeOpenGame.getName());
             ActionListener actionListener = new ActionListener() {
                 @Override
                 public void actionPerformed(String actionCommand) {
@@ -161,7 +171,7 @@ public class MiniLobbyShithead implements MiniLobbyGame {
             chatButton.addActionListener(actionListener);
             openGameUI.getMenu().add(chatButton);
 
-            if (lobby.getCurrentOpenGame().hasPlayer(lobby.whoAmI())) {
+            if (onlineGame.getPlayer(lobby.whoAmI()) != null) {
                 resignButton = new Button(strings.getProperty("game.resign"));
                 resignButton.setActionCommand("resign");
                 resignButton.addActionListener(actionListener);
