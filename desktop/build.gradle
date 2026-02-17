@@ -17,7 +17,7 @@ application {
 
 dependencies {
     implementation project(':client')
-    implementation ('org.swingme:swingme-binding-desktop:4.0.0') {
+    implementation ('org.swingme:swingme-binding-desktop:4.1.0') {
         exclude group: 'junit', module: 'junit'
     }
     testImplementation 'org.junit.jupiter:junit-jupiter:5.8.1'

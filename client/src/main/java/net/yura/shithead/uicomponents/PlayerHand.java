@@ -207,10 +207,9 @@ public class PlayerHand {
 
     private void rotate(Graphics2D g, double angle) {
         if (!isLocalPlayer) {
-            // TODO enable rotation when libs updated
-            //g.translate(x, y);
-            //g.getGraphics().rotate(angle);
-            //g.translate(-x, -y);
+            g.translate(x, y);
+            g.getGraphics().rotate(angle);
+            g.translate(-x, -y);
         }
     }
 
