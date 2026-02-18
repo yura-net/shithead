@@ -8,6 +8,10 @@ import net.yura.mobile.gui.Icon;
 import net.yura.cardsengine.Card;
 import net.yura.mobile.gui.layout.XULLoader;
 import javax.microedition.lcdui.Image;
+import net.yura.mobile.gui.Application;
+
+
+
 
 public class CardImageManager {
 
@@ -18,7 +22,7 @@ public class CardImageManager {
 
     static {
         String size = System.getProperty("display.size");
-        if ("large".equals(size) || "xlarge".equals(size)) {
+        if (Application.getPlatform() == Application.PLATFORM_ME4SE || "large".equals(size) || "xlarge".equals(size)) {
             cardWidth = XULLoader.adjustSizeToDensity(65);
             cardHeight = XULLoader.adjustSizeToDensity(120);
         }
