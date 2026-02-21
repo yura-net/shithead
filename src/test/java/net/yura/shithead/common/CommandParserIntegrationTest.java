@@ -35,7 +35,7 @@ public class CommandParserIntegrationTest {
         assertEquals(1, game.getPlayers().size(), "There should be only one player left.");
 
         Player loser = game.getPlayers().get(0);
-        assertEquals("[7H, 9H, 9C, 5D, 5C, 6H, JH, KD, KS, KC, AH]", loser.getHand().toString());
+        assertEquals("[5D, 7H, 3D, JC, JH, KD, KS]", loser.getHand().toString());
         assertEquals("[]", loser.getUpcards().toString());
         assertEquals("[AD, 2D]", loser.getDowncards().toString());
     }
@@ -61,52 +61,52 @@ public class CommandParserIntegrationTest {
         assertEquals(1, game.getPlayers().size(), "There should be only one player left.");
 
         Player loser = game.getPlayers().get(0);
-        assertEquals("[QS, QS, QC]", loser.getHand().toString());
-        assertEquals("[3S]", loser.getUpcards().toString());
-        assertEquals("[7D, KC, KH]", loser.getDowncards().toString());
+        assertEquals("[]", loser.getHand().toString());
+        assertEquals("[8D]", loser.getUpcards().toString());
+        assertEquals("[3D, AH, 8S]", loser.getDowncards().toString());
     }
 
     @Test
     public void testSpectatorGame() throws Exception {
-        // Setup a game to a certain point
         CommandParser parser = new CommandParser();
         ShitheadGame game = new ShitheadGame(2);
         Deck deck = game.getDeck();
         deck.setRandom(new Random(123)); // Fixed seed
         game.deal();
 
-        String[] setupCommands = {
-            "ready Player+1", "ready Player+2",
-            "play hand 7D", "play hand 2C", "play hand QS", "play hand KC", "pickup", "play hand JC"
-        };
+        // Ready both players using AutoPlay
+        while (game.isRearranging()) {
+            Player notReady = game.getPlayers().stream()
+                .filter(p -> !game.getPlayersReady().contains(p))
+                .findFirst().get();
+            String command = AutoPlay.getValidGameCommand(game, notReady.getName());
+            parser.execute(game, CommandParser.getMutationCommand(game, command));
+        }
 
-        for (String command : setupCommands) {
+        // Play a few turns to get the game into an interesting state
+        for (int i = 0; i < 6; i++) {
+            String command = AutoPlay.getValidGameCommand(game);
             parser.parse(game, command);
         }
 
         // Serialize from a spectator's POV
-        String spectatorJson = net.yura.shithead.common.json.SerializerUtil.toJSON(game, "spectator");
+        String spectatorJson = SerializerUtil.toJSON(game, "spectator");
 
         // Deserialize back
-        ShitheadGame spectatorGame = net.yura.shithead.common.json.SerializerUtil.fromJSON(spectatorJson);
+        ShitheadGame spectatorGame = SerializerUtil.fromJSON(spectatorJson);
 
-        // Continue the game with the spectator's view
-        String[] subsequentCommands = {
-            "play hand 2C", "play hand 8C", "play hand 9S", "pickup", "play hand 7C", "play hand 7S"
-        };
-
-        for (String command : subsequentCommands) {
+        // Continue a few more turns, keeping both views in sync
+        for (int i = 0; i < 6; i++) {
+            if (game.isFinished()) break;
+            String command = AutoPlay.getValidGameCommand(game);
             String mutation = CommandParser.getMutationCommand(game, command);
-            parser.execute(game, mutation); // at each step we need to also update the full game
-
+            parser.execute(game, mutation);
             parser.execute(spectatorGame, mutation);
         }
 
         String json1 = SerializerUtil.toJSON(game, "spectator");
         String json2 = SerializerUtil.toJSON(spectatorGame, "spectator");
 
-        assertEquals(json1, json2);
-
-        assertEquals("Player 1", spectatorGame.getCurrentPlayer().getName());
+        assertEquals(json1, json2, "Spectator game view should match full game view");
     }
 }

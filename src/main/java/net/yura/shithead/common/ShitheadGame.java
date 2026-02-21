@@ -20,6 +20,10 @@ import java.util.Set;
  */
 public class ShitheadGame {
 
+    private boolean goLowRuleEnabled = true;
+    public boolean isGoLowRuleEnabled() { return goLowRuleEnabled; }
+    public void setGoLowRuleEnabled(boolean goLowRuleEnabled) { this.goLowRuleEnabled = goLowRuleEnabled; }
+
     private Set<Player> playersReady = new HashSet<>();
     private List<Player> players = new ArrayList<>();
     private final Deck deck;
@@ -341,6 +345,8 @@ public class ShitheadGame {
         return burned;
     }
 
+
+
     public boolean isPlayable(Rank rank, Card top) {
         if (rank == Rank.TWO || rank == Rank.TEN || top == null) {
             return true;
@@ -348,8 +354,12 @@ public class ShitheadGame {
         if (top.getRank() == Rank.TWO) {
             return true;
         }
+        if (goLowRuleEnabled && top.getRank() == Rank.SEVEN) {
+            return AcesHighCardComparator.getRankValue(rank) < AcesHighCardComparator.getRankValue(top.getRank());
+        }
         return AcesHighCardComparator.getRankValue(rank) >= AcesHighCardComparator.getRankValue(top.getRank());
     }
+
 
     private void advanceTurn() {
         currentPlayer = (currentPlayer + 1) % players.size();
