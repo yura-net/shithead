@@ -89,8 +89,25 @@ public class CommandParser {
                 if (player == null) {
                     throw new IllegalArgumentException("player not found: " + playerName);
                 }
-
                 game.playerReady(player);
+                return;
+            case "rule":
+                if (tokens.length != 3) {
+                    throw new IllegalArgumentException("incomplete rule command");
+                }
+                if (!tokens[1].equalsIgnoreCase("golow")) {
+                    throw new IllegalArgumentException("unknown rule: " + tokens[1]);
+                }
+                switch (tokens[2].toLowerCase()) {
+                    case "on":
+                        game.setGoLowRuleEnabled(true);
+                        break;
+                    case "off":
+                        game.setGoLowRuleEnabled(false);
+                        break;
+                    default:
+                        throw new IllegalArgumentException("rule value must be 'on' or 'off'");
+                }
                 return;
             case "play":
                 if (!game.isPlaying()) {
@@ -120,7 +137,6 @@ public class CommandParser {
                                 }
                             }
                         }
-
                         cards = Arrays.asList(tokens).subList(2, end).stream().map(SerializerUtil::cardFromString).collect(Collectors.toList());
                         break;
                     case "up":
