@@ -345,9 +345,6 @@ public class ShitheadGame {
         if (rank == Rank.TWO || rank == Rank.TEN || top == null) {
             return true;
         }
-        if (top.getRank() == Rank.TWO) {
-            return true;
-        }
         return AcesHighCardComparator.getRankValue(rank) >= AcesHighCardComparator.getRankValue(top.getRank());
     }
 
