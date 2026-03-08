@@ -7,6 +7,7 @@
         <button action="singleplayer" i18n="true" text="button.play.offline"/>
         <button action="multiplayer" i18n="true" text="button.play.online"/>
         <button action="about" i18n="true" text="button.about"/>
+        <button action="quit" mnemonic="27" visible="false"/>
     </panel>
     <button action="banner" halign="center" name="banner" property="plafname=Banner" valign="bottom"/>
 </dialog>

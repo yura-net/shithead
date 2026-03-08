@@ -149,6 +149,9 @@ public class ShitHeadApplication extends Application implements ActionListener {
             Application.openURL("https://silverstreetgames.co.uk");
 
         }
+        else if ("quit".equals(actionCommand)) {
+            Application.exit();
+        }
         else if (Frame.CMD_CLOSE.equals(actionCommand)) { // close the lobby
             Panel lobbyUI = minilobby.getRoot();
             Window frame = lobbyUI.getWindow();
