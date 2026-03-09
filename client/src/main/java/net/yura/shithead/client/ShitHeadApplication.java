@@ -43,6 +43,19 @@ public class ShitHeadApplication extends Application implements ActionListener {
 
     private MiniLobbyClient minilobby;
 
+    /**
+     * create an image without doing any auto scaling
+     * @see #createImage(String)
+     */
+    private static Image createImageNoScale(String name) {
+        try (InputStream bannerStream = ShitHeadApplication.class.getResourceAsStream(name)) {
+            return Image.createImage(bannerStream);
+        }
+        catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     protected void initialize(DesktopPane dp) {
 
         // this needs to be set right at the start BEFORE the animation thread starts
@@ -82,7 +95,8 @@ public class ShitHeadApplication extends Application implements ActionListener {
             Button banner = (Button) loader.find("banner");
             banner.setMargin(0);
             int width = Math.min(DesktopPane.getDesktopPane().getWidth(), DesktopPane.getDesktopPane().getHeight());
-            Icon img = new Icon(Image.createImage(ShitHeadApplication.class.getResourceAsStream("/banner.jpg")));
+
+            Icon img = new Icon(createImageNoScale("/banner.jpg"));
             GameRenderer.ScaledIcon icon = new GameRenderer.ScaledIcon(width, (int) ((width / (double)img.getIconWidth()) * img.getIconHeight()));
             icon.setIcon(img);
             banner.setIcon(icon);
