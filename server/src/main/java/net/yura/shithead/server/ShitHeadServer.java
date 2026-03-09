@@ -36,6 +36,11 @@ public class ShitHeadServer extends AbstractTurnBasedServerGame {
 
         // TODO as we never call getInputFromClient, we never end up timing out any player if they do not go
         // so game can get stuck if any player does not send ready
+
+        // tell all users the game has started and we want input from all of them
+        for (Player player : game.getPlayers()) {
+            listoner.needInputFrom(player.getName());
+        }
     }
 
     @Override
@@ -145,6 +150,9 @@ public class ShitHeadServer extends AbstractTurnBasedServerGame {
         if (game.isPlaying()) {
             getNextTurn();
         }
+        // TODO if we have only 1 player left to be marked as ready, we can already set them as current player
+        // TODO BUT maybe its good that we dont kick off any timers before everyone is ready,
+        // gives everyone a chance to join the game even if the timeout for turns is small
         else if (game.isFinished()) {
             gameFinished(null);
         }
