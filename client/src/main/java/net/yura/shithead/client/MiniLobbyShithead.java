@@ -193,8 +193,11 @@ public class MiniLobbyShithead implements MiniLobbyGame {
             openGameUI.setMyUsername(username);
         }
 
-
-        // dont need to do anything
+        ShitHeadApplication app = (ShitHeadApplication) Application.getInstance();
+        if (app.pendingOpenGame != null) {
+            lobby.openGame(app.pendingOpenGame);
+            app.pendingOpenGame = null;
+        }
     }
 
     @Override
