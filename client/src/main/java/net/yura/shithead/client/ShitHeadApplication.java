@@ -5,13 +5,16 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.Scanner;
 import java.util.function.Consumer;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
+import net.yura.lobby.client.PushLobbyClient;
 import net.yura.lobby.mini.GameRenderer;
 import net.yura.lobby.mini.MiniLobbyClient;
+import net.yura.lobby.model.Game;
 import net.yura.mobile.gui.ActionListener;
 import net.yura.mobile.gui.Animation;
 import net.yura.mobile.gui.Application;
@@ -28,6 +31,7 @@ import net.yura.mobile.gui.components.Spinner;
 import net.yura.mobile.gui.components.TextComponent;
 import net.yura.mobile.gui.components.Window;
 import net.yura.mobile.gui.layout.XULLoader;
+import net.yura.mobile.logging.Logger;
 import net.yura.mobile.util.Properties;
 import net.yura.shithead.common.AutoPlay;
 import net.yura.shithead.common.CommandParser;
@@ -47,6 +51,7 @@ public class ShitHeadApplication extends Application implements ActionListener {
     private ShitheadGame singlePlayerGame;
 
     private MiniLobbyClient minilobby;
+    Game pendingOpenGame;
 
     /**
      * create an image without doing any auto scaling
@@ -59,6 +64,12 @@ public class ShitHeadApplication extends Application implements ActionListener {
         catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @Override
+    protected DesktopPane makeNewRootPane() {
+        // app splash screen, same as back of card
+        return new DesktopPane(this, 0xFFc1c1c1, "/back.png");
     }
 
     protected void initialize(DesktopPane dp) {
@@ -312,11 +323,16 @@ public class ShitHeadApplication extends Application implements ActionListener {
 
     private void loadState() {
         try {
-            File autoSave = new File(getGameDir(), "auto.save");
-            if (autoSave.exists()) {
-                String json = new Scanner(autoSave, "UTF-8").useDelimiter("\\A").next();
-                autoSave.delete();
-                openGame(SerializerUtil.fromJSON(json));
+            if (pendingOpenGame != null) {
+                openLobby();
+            }
+            else {
+                File autoSave = new File(getGameDir(), "auto.save");
+                if (autoSave.exists()) {
+                    String json = new Scanner(autoSave, "UTF-8").useDelimiter("\\A").next();
+                    autoSave.delete();
+                    openGame(SerializerUtil.fromJSON(json));
+                }
             }
         }
         catch (Exception ex) {
@@ -332,5 +348,69 @@ public class ShitHeadApplication extends Application implements ActionListener {
             throw new RuntimeException("can not create dir " + gameDir);
         }
         return gameDir;
+    }
+
+
+
+
+
+    public void pushNotificationsToken(String system, String token) {
+        Logger.info("Push Token " + system + " " + token);
+
+        // we only request the token once we have connected
+        MiniLobbyClient lobby = minilobby;
+
+        // if the user has closed the lobby by the time we get the token we have nothing we can do
+        if (lobby != null) {
+            if (Application.getPlatform() == Application.PLATFORM_IOS) {
+
+                lobby.setPushToken(system, token, null);
+            }
+            else if (Application.getPlatform() == Application.PLATFORM_ANDROID) {
+                lobby.setPushToken(system, token, () -> {
+                    try {
+                        Application.getInstance().platformRequest("notify://setRegisteredOnServer/" + token);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                });
+            }
+        }
+    }
+
+    /**
+     * this may be called at ANY point after this Application Object is created (including before {@link #initialize(DesktopPane)}), so we need to handle that
+     */
+    public void openNotification(Map params) {
+
+        String gameId = (String)params.get(PushLobbyClient.GAME_ID);
+        String options = (String)params.get(PushLobbyClient.OPTIONS);
+
+        if (gameId != null) {
+            Game game = new Game();
+            game.setId(Integer.parseInt(gameId));
+            game.setOptions(options);
+
+            if (minilobby != null && minilobby.getRoot().isShowing()) {
+                if (minilobby.whoAmI() != null) {
+                    minilobby.openGame(game);
+                }
+                else {
+                    pendingOpenGame = game;
+                    Logger.info("lobby open but we are not logged in yet");
+                }
+            }
+            else {
+                pendingOpenGame = game;
+                // if we already have menu UI open, then we can try open the lobby
+                // if we have a single player game open then we do nothing
+                if (singlePlayerGame == null && DesktopPane.getDesktopPane().getSelectedFrame() != null) {
+                    openLobby();
+                }
+            }
+        }
+        else {
+            Logger.info("opened from notification, but no game info " + params);
+        }
     }
 }

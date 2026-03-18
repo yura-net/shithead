@@ -22,7 +22,7 @@ public class CardImageManager {
 
     static {
         String size = System.getProperty("display.size");
-        if (Application.getPlatform() == Application.PLATFORM_ME4SE || "large".equals(size) || "xlarge".equals(size)) {
+        if ("large".equals(size) || "xlarge".equals(size)) {
             cardWidth = XULLoader.adjustSizeToDensity(65);
             cardHeight = XULLoader.adjustSizeToDensity(120);
         }
