@@ -54,17 +54,8 @@ task extractFileFromJar(type: Copy) {
     mustRunAfter("compileJava")
 }
 
-moeMainReleaseProGuard {
-    dependsOn(extractFileFromJar)
-    appendCfgFile "proguard.append.cfg"
-}
-moeMainDebugProGuard {
-    dependsOn(extractFileFromJar)
-    appendCfgFile "proguard.append.cfg"
-}
-moeTestDebugProGuard {
-    dependsOn(extractFileFromJar)
-    appendCfgFile "proguard.append.cfg"
+tasks.withType(org.moe.gradle.tasks.ProGuard.class).configureEach {
+    it.dependsOn(extractFileFromJar)
 }
 
 // copy the 'iosmeimg' folder into the main app resource bundle
