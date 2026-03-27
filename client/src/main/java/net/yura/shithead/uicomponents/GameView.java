@@ -53,8 +53,13 @@ public class GameView extends Panel {
 
     public void setMyUsername(String playerID) {
         this.myUsername = playerID;
-        layoutCards();
-        repaint();
+        DesktopPane.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                layoutCards();
+                repaint();
+            }
+        });
     }
 
     private PlayerHand getPlayerHand(String username) {
