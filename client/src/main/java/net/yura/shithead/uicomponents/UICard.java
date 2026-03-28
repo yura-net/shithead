@@ -164,14 +164,15 @@ public class UICard {
         double distance = Math.sqrt(dx * dx + dy * dy);
 
         int fullDistance = Math.min(DesktopPane.getDesktopPane().getWidth(), DesktopPane.getDesktopPane().getHeight());
+
+        // Already at target or we don't know the screen size yet
+        if (distance == 0 || fullDistance == 0) {
+            return new double[]{x, y};
+        }
+
         // this is not really the proper way to use Easings, but it also works in converting our distance to speed
         // in an ideal world, we would be converting TIME to DISTANCE
         double speed = Easings.easeOutQuint(Math.min(distance / fullDistance, 1.0));
-
-        // Already at target
-        if (distance == 0) {
-            return new double[]{x, y};
-        }
 
         // Step size logic
         double maxStep = speed * (fullDistance / 20.0);
