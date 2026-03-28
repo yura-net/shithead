@@ -51,9 +51,12 @@ public class GameView extends Panel {
         this.game = game;
     }
 
+    /**
+     * WARNING! this method can get called at ANY time from both UI AND network threads
+     */
     public void setMyUsername(String playerID) {
         this.myUsername = playerID;
-        layoutCards();
+        revalidate(); // this will call layoutCards() on UI thread
         repaint();
     }
 
