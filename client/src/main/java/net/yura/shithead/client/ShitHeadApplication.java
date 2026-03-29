@@ -102,7 +102,7 @@ public class ShitHeadApplication extends Application implements ActionListener {
     }
 
     private void openMainMenu() {
-        System.out.println("OPENING MENU");
+        Logger.info("OPENING MENU");
 
         XULLoader loader = new XULLoader();
         try (InputStream stream = ShitHeadApplication.class.getResourceAsStream("/main_menu.xml")) {
@@ -157,32 +157,15 @@ public class ShitHeadApplication extends Application implements ActionListener {
             dialog.setVisible(true);
         }
         else if ("about".equals(actionCommand)) {
-            String versionName = System.getProperty("versionName");
-            String versionCode = System.getProperty("versionCode");
-
-            if (versionName == null) {
-                try (InputStream stream = Application.getResourceAsStream("/META-INF/MANIFEST.MF")) {
-                    Manifest manifest = new Manifest(stream);
-                    Attributes attributes = manifest.getMainAttributes();
-                    versionName = attributes.getValue("versionName");
-                    versionCode = attributes.getValue("versionCode");
-                }
-                catch (IOException ex) {
-                    ex.printStackTrace();
-                }
-            }
-
             // TODO move about text to properties file
             OptionPane.showMessageDialog(null, new String[] {
-                    "Version: " + versionName + " (Build: " + versionCode+")",
+                    "Version: " + getVersionString(),
                     "\u00a9 Copyright 2026 yura.net \ud83c\uddfa\ud83c\udde6",
                     "https://github.com/yura-net/shithead",
                     "license: GNU General Public License 3.0"}, properties.getProperty("about.title"), OptionPane.INFORMATION_MESSAGE);
         }
         else if ("banner".equals(actionCommand)) {
-
             Application.openURL("https://silverstreetgames.co.uk");
-
         }
         else if ("quit".equals(actionCommand)) {
             Application.exit();
@@ -196,8 +179,27 @@ public class ShitHeadApplication extends Application implements ActionListener {
             openMainMenu();
         }
         else {
-            System.out.println("unknown command: " + actionCommand);
+            Logger.info("unknown command: " + actionCommand);
         }
+    }
+
+    private static String getVersionString() {
+        String versionName = System.getProperty("versionName");
+        String versionCode = System.getProperty("versionCode");
+
+        if (versionName == null) {
+            try (InputStream stream = Application.getResourceAsStream("/META-INF/MANIFEST.MF")) {
+                Manifest manifest = new Manifest(stream);
+                Attributes attributes = manifest.getMainAttributes();
+                versionName = attributes.getValue("versionName");
+                versionCode = attributes.getValue("versionCode");
+            }
+            catch (IOException ex) {
+                ex.printStackTrace();
+            }
+        }
+
+        return versionName + " (Build: " + versionCode+")";
     }
 
     private void openLobby() {
@@ -329,7 +331,10 @@ public class ShitHeadApplication extends Application implements ActionListener {
             else {
                 File autoSave = new File(getGameDir(), "auto.save");
                 if (autoSave.exists()) {
-                    String json = new Scanner(autoSave, "UTF-8").useDelimiter("\\A").next();
+                    String json;
+                    try (Scanner scanner = new Scanner(autoSave, "UTF-8")) {
+                        json = scanner.useDelimiter("\\A").next();
+                    }
                     autoSave.delete();
                     openGame(SerializerUtil.fromJSON(json));
                 }

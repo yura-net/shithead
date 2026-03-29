@@ -1,5 +1,6 @@
 ## TODO
 
+- add grasshopper lib, get java exception info for blank screen error
 - test Google login on android, what does this mean when there are 2 apps installed?
 
 - maybe do length along curve instead of angle to get other player position
