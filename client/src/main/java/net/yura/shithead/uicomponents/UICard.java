@@ -165,8 +165,8 @@ public class UICard {
 
         int fullDistance = Math.min(DesktopPane.getDesktopPane().getWidth(), DesktopPane.getDesktopPane().getHeight());
 
-        // Already at target or we don't know the screen size yet
-        if (distance == 0 || fullDistance == 0) {
+        // Already at target
+        if (distance == 0) {
             return new double[]{x, y};
         }
 

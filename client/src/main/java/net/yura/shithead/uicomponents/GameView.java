@@ -83,18 +83,12 @@ public class GameView extends Panel {
     @Override
     public void doLayout() {
         super.doLayout();
-        if (game != null) {
-            layoutCards();
-        }
+        layoutCards();
     }
 
     @Override
     public void paintComponent(Graphics2D g) {
         super.paintComponent(g);
-        if (game == null) {
-            return;
-        }
-
         for (PlayerHand hand : playerHands.values()) {
             hand.paint(g, this);
         }
@@ -409,7 +403,7 @@ public class GameView extends Panel {
     @Override
     public void processMouseEvent(int type, int x, int y, KeyEvent buttons) {
 
-        if (type == DesktopPane.RELEASED && game != null) {
+        if (type == DesktopPane.RELEASED) {
             for (int i = deckAndWasteUICards.size() - 1; i >= 0; i--) {
                 UICard uiCard = deckAndWasteUICards.get(i);
                 // if user clicks on waste pile during our turn, this mean we should pick up the waste pile
