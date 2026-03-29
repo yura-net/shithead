@@ -15,6 +15,7 @@ dependencies {
 
     // these are needed for compile only, the actual versions used are specific to android/ios
     compileOnly 'org.swingme:me4se-midletrunner:4.1.0'
+    compileOnly "net.yura:grasshopper:2.19"
 
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.10.2'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.10.2'
