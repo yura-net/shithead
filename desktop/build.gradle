@@ -20,6 +20,7 @@ dependencies {
     implementation ('org.swingme:swingme-binding-desktop:4.1.0') {
         exclude group: 'junit', module: 'junit'
     }
+    implementation "net.yura:grasshopper:2.19"
     testImplementation 'org.junit.jupiter:junit-jupiter:5.8.1'
     testImplementation "org.mockito:mockito-core:$mockitoVersion"
     testImplementation 'com.github.romankh3:image-comparison:4.4.0'
