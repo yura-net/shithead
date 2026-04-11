@@ -45,6 +45,7 @@ public class ShitHeadApplication extends Application implements ActionListener {
     private static final String SINGLE_PLAYER_NAME = "Player 1";
 
     static final Border background = new EdgeToEdgeBorder(new BackgroundBorder(createImageNoScale("/table.jpg")));
+    final CommandParser parser = new CommandParser();
 
     private Properties properties;
 
@@ -140,7 +141,7 @@ public class ShitHeadApplication extends Application implements ActionListener {
             XULLoader gameSetupLoader = createNewGameScreen(properties, loader -> {
                 Spinner players = (Spinner)loader.find("players");
                 int numPlayers = (Integer)players.getValue();
-                createNewGame(numPlayers);
+                createNewSinglePlayerGame(numPlayers);
             });
 
             gameSetupLoader.find("gamenameLabel").setVisible(false);
@@ -219,7 +220,7 @@ public class ShitHeadApplication extends Application implements ActionListener {
         frame.repaint();
     }
 
-    private void createNewGame(int numPlayers) {
+    private void createNewSinglePlayerGame(int numPlayers) {
 
         ShitheadGame singlePlayerGame = new ShitheadGame(numPlayers);
         singlePlayerGame.deal();
@@ -232,40 +233,21 @@ public class ShitHeadApplication extends Application implements ActionListener {
             }
         }
 
-        openGame(singlePlayerGame);
+        openSinglePlayerGame(singlePlayerGame);
     }
 
-    private void openGame(ShitheadGame game) {
+    private void openSinglePlayerGame(ShitheadGame game) {
         this.singlePlayerGame = game;
-        Player me = game.getPlayer(SINGLE_PLAYER_NAME);
 
         final GameUI gameUI = new GameUI(properties, singlePlayerGame, new ActionListener() {
             @Override
             public void actionPerformed(String actionCommand) {
-                CommandParser parser = new CommandParser();
                 parser.parse(singlePlayerGame, actionCommand);
-
                 // TODO ideally we would call GameView.layoutCards() directly as when we use revalidate it may or not get called
-
                 DesktopPane.getDesktopPane().getSelectedFrame().revalidate();
                 DesktopPane.getDesktopPane().getSelectedFrame().repaint();
 
-                new Thread() {
-                    @Override
-                    public void run() {
-                        ShitheadGame game = singlePlayerGame;
-                        while (singlePlayerGame != null && !game.isFinished() && game.isPlaying() && game.getCurrentPlayer() != me) {
-                            try {
-                                Thread.sleep(2000);
-                            } catch (InterruptedException e) {
-                                break;
-                            }
-                            parser.parse(game, AutoPlay.getValidGameCommand(game));
-                            DesktopPane.getDesktopPane().getSelectedFrame().revalidate();
-                            DesktopPane.getDesktopPane().getSelectedFrame().repaint();
-                        }
-                    }
-                }.start();
+                doAITurn();
             }
         });
         gameUI.setMyUsername(SINGLE_PLAYER_NAME);
@@ -275,8 +257,31 @@ public class ShitHeadApplication extends Application implements ActionListener {
                 singlePlayerGame = null;
             }
         };
+
+        if (game.isPlaying() && !SINGLE_PLAYER_NAME.equals(game.getCurrentPlayer().getName())) {
+            doAITurn();
+        }
     }
 
+    private void doAITurn() {
+        ShitheadGame game = singlePlayerGame;
+        Player me = game.getPlayer(SINGLE_PLAYER_NAME);
+        new Thread() {
+            @Override
+            public void run() {
+                while (singlePlayerGame != null && !game.isFinished() && game.isPlaying() && game.getCurrentPlayer() != me) {
+                    try {
+                        Thread.sleep(2000);
+                    } catch (InterruptedException e) {
+                        break;
+                    }
+                    parser.parse(game, AutoPlay.getValidGameCommand(game));
+                    DesktopPane.getDesktopPane().getSelectedFrame().revalidate();
+                    DesktopPane.getDesktopPane().getSelectedFrame().repaint();
+                }
+            }
+        }.start();
+    }
 
     public static XULLoader createNewGameScreen(Properties properties, Consumer<XULLoader> actionListener) {
         final XULLoader gameSetupLoader = new XULLoader();
@@ -336,7 +341,7 @@ public class ShitHeadApplication extends Application implements ActionListener {
                         json = scanner.useDelimiter("\\A").next();
                     }
                     autoSave.delete();
-                    openGame(SerializerUtil.fromJSON(json));
+                    openSinglePlayerGame(SerializerUtil.fromJSON(json));
                 }
             }
         }

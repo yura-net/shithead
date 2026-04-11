@@ -3,6 +3,7 @@
 - add grasshopper lib, get java exception info for blank screen error
 - test Google login on android, what does this mean when there are 2 apps installed?
 
+- when a hidden card is played and is not valid, the other players should find out what that card is
 - maybe do length along curve instead of angle to get other player position
 - some animations take card from deck when they should take it from the player
 - add cards being burned animation so they dont just vanish
