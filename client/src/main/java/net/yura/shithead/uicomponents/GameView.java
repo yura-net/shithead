@@ -95,7 +95,7 @@ public class GameView extends Panel {
 
         // paint deck and waste pile
         for (int i = 0; i < deckAndWasteUICards.size(); i++) {
-            deckAndWasteUICards.get(i).paint(g, this);
+            deckAndWasteUICards.get(i).paint(g, this, game);
         }
 
         if (game.isFinished()) {
@@ -395,7 +395,6 @@ public class GameView extends Panel {
         uiCard.setPlayable(false);
         uiCard.setLocation(location);
         uiCard.setFaceUp(isFaceUp);
-        uiCard.setSevenGoLow(game.isSevenGoLow());
         if (card != null) {
             cardToUICard.put(card, uiCard);
         }

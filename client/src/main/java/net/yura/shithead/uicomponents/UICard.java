@@ -2,6 +2,7 @@ package net.yura.shithead.uicomponents;
 
 import net.yura.cardsengine.Card;
 import net.yura.cardsengine.Rank;
+import net.yura.shithead.common.ShitheadGame;
 import net.yura.mobile.gui.DesktopPane;
 import net.yura.mobile.gui.Font;
 import net.yura.mobile.gui.Graphics2D;
@@ -26,7 +27,6 @@ public class UICard {
      * used by the UI to draw a yellow border to indicate this card can be played right now
      */
     private boolean playable;
-    private boolean sevenGoLow;
 
     private static final Border selectionBorder = new LineBorder(0xFF87CEEB, XULLoader.adjustSizeToDensity(4));
     private static final Border playableBorder = new LineBorder(0xFFFFBF00, XULLoader.adjustSizeToDensity(2));
@@ -55,7 +55,7 @@ public class UICard {
         this.targetY = y;
     }
 
-    public void paint(Graphics2D g, Component c) {
+    public void paint(Graphics2D g, Component c, ShitheadGame game) {
         Icon icon;
         String text = null;
         if (faceUp && card != null) {
@@ -67,7 +67,7 @@ public class UICard {
             else if (Rank.TWO.equals(card.getRank())) {
                 text = "Reset";
             }
-            else if (sevenGoLow && Rank.SEVEN.equals(card.getRank())) {
+            else if (game != null && game.isSevenGoLow() && Rank.SEVEN.equals(card.getRank())) {
                 text = "Go Low";
             }
         }
@@ -133,10 +133,6 @@ public class UICard {
 
     public void setPlayable(boolean isPlayable) {
         this.playable = isPlayable;
-    }
-
-    public void setSevenGoLow(boolean sevenGoLow) {
-        this.sevenGoLow = sevenGoLow;
     }
 
     public boolean contains(int px, int py) {
