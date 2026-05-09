@@ -90,6 +90,28 @@ public class SerializerUtilTest {
     }
 
     @Test
+    public void testSevenGoLowSerializedWhenTrue() throws Exception {
+        game.setSevenGoLow(true);
+        String json = SerializerUtil.toJSON(game, null);
+        assertTrue(json.contains("\"sevenGoLow\" : true"), "Expected sevenGoLow to be true in serialized JSON");
+    }
+
+    @Test
+    public void testSevenGoLowDeserializationRoundtrip() throws Exception {
+        game.setSevenGoLow(true);
+        String json = SerializerUtil.toJSON(game, null);
+        ShitheadGame deserialized = SerializerUtil.fromJSON(json);
+        assertTrue(deserialized.isSevenGoLow());
+    }
+
+    @Test
+    public void testSevenGoLowDefaultIsFalseAfterDeserialization() throws IOException {
+        String jsonSnapshot = loadResourceAsString("/testgame.json");
+        ShitheadGame deserialized = SerializerUtil.fromJSON(jsonSnapshot);
+        assertFalse(deserialized.isSevenGoLow());
+    }
+
+    @Test
     void testDeserializationPlayerSpecific() throws Exception {
         // Load the player-specific JSON file
         String json = loadResourceAsString("/testgame_alice.json");

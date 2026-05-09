@@ -44,6 +44,7 @@ public class GameDeserializer extends StdDeserializer<ShitheadGame> {
         List<Player> players = null;
         List<Card> deckCards = null;
         List<Card> wastePile = null;
+        boolean sevenGoLow = false;
 
         while (jp.nextToken() != JsonToken.END_OBJECT) {
             String fieldName = jp.getCurrentName();
@@ -59,6 +60,8 @@ public class GameDeserializer extends StdDeserializer<ShitheadGame> {
                 deckCards = readCardsOrCount(jp);
             } else if ("wastePile".equals(fieldName)) {
                 wastePile = readCardsOrCount(jp);
+            } else if ("sevenGoLow".equals(fieldName)) {
+                sevenGoLow = jp.getBooleanValue();
             } else {
                 jp.skipChildren();
             }
@@ -94,6 +97,7 @@ public class GameDeserializer extends StdDeserializer<ShitheadGame> {
         game.setPlayersReady(playersReadySet);
         game.setPlayers(players);
         game.setWastePile(wastePile);
+        game.setSevenGoLow(sevenGoLow);
 
         // Set the current player index
         if (currentPlayerName != null) {

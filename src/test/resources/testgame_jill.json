@@ -13,5 +13,6 @@
     "downcardsCount" : 3
   } ],
   "playersReady" : [ "Alice" ],
-  "currentPlayerName" : null
+  "currentPlayerName" : null,
+  "sevenGoLow" : false
 }
