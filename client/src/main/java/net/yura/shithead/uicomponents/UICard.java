@@ -2,6 +2,7 @@ package net.yura.shithead.uicomponents;
 
 import net.yura.cardsengine.Card;
 import net.yura.cardsengine.Rank;
+import net.yura.shithead.common.ShitheadGame;
 import net.yura.mobile.gui.DesktopPane;
 import net.yura.mobile.gui.Font;
 import net.yura.mobile.gui.Graphics2D;
@@ -54,7 +55,7 @@ public class UICard {
         this.targetY = y;
     }
 
-    public void paint(Graphics2D g, Component c) {
+    public void paint(Graphics2D g, Component c, ShitheadGame game) {
         Icon icon;
         String text = null;
         if (faceUp && card != null) {
@@ -65,6 +66,9 @@ public class UICard {
             }
             else if (Rank.TWO.equals(card.getRank())) {
                 text = "Reset";
+            }
+            else if (game != null && game.isSevenGoLow() && Rank.SEVEN.equals(card.getRank())) {
+                text = "Go Low";
             }
         }
         else {

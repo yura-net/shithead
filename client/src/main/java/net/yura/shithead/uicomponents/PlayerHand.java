@@ -175,7 +175,7 @@ public class PlayerHand {
             if (moving) {
                 rotate(g, -angle);
             }
-            card.paint(g, c);
+            card.paint(g, c, game);
             if (moving) {
                 rotate(g, angle);
             }
