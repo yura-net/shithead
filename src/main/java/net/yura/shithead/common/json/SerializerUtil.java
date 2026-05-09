@@ -114,7 +114,7 @@ public class SerializerUtil {
             return mapper.readValue(json, new TypeReference<Map<String, String>>(){});
         }
         catch (JsonProcessingException e) {
-            return new HashMap<>();
+            throw new IllegalArgumentException("bad options json " + json, e);
         }
     }
 }
