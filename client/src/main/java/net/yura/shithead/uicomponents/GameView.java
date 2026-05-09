@@ -395,6 +395,7 @@ public class GameView extends Panel {
         uiCard.setPlayable(false);
         uiCard.setLocation(location);
         uiCard.setFaceUp(isFaceUp);
+        uiCard.setSevenGoLow(game.isSevenGoLow());
         if (card != null) {
             cardToUICard.put(card, uiCard);
         }
