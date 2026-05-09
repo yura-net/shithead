@@ -27,7 +27,7 @@ import net.yura.shithead.uicomponents.Icons;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.Hashtable;
 import java.util.Map;
 import java.util.jar.Manifest;
@@ -95,11 +95,8 @@ public class MiniLobbyShithead implements MiniLobbyGame {
             int timeout = Integer.parseInt(((Option) ((ComboBox) loader.find("TimeoutValue")).getSelectedItem()).getKey());
 
             Hashtable formData = loader.getFormData();
-            Map<String, String> optionsMap = new HashMap<>();
-            if ("true".equals(formData.get("sevenGoLow"))) {
-                optionsMap.put("sevenGoLow", "true");
-            }
-            Game newGame = new Game(gameName, SerializerUtil.optionsToJson(optionsMap), numPlayers, timeout);
+            formData.keySet().retainAll(Collections.singletonList("sevenGoLow"));
+            Game newGame = new Game(gameName, SerializerUtil.optionsToJson(formData), numPlayers, timeout);
 
             if (((Button) loader.find("private")).isSelected()) {
                 newGame.setMagicWord(((TextComponent) loader.find("password")).getText());

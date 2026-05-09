@@ -97,7 +97,7 @@ public class SerializerUtil {
         }
     }
 
-    public static String optionsToJson(Map<String, String> options) {
+    public static String optionsToJson(Map<?,?> options) {
         try {
             return mapper.writeValueAsString(options);
         }
