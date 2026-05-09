@@ -27,6 +27,9 @@ import net.yura.shithead.uicomponents.Icons;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Hashtable;
+import java.util.Map;
 import java.util.jar.Manifest;
 
 public class MiniLobbyShithead implements MiniLobbyGame {
@@ -74,6 +77,10 @@ public class MiniLobbyShithead implements MiniLobbyGame {
 
     @Override
     public String getGameDescription(Game game) {
+        Map<String, String> options = SerializerUtil.optionsFromJson(game.getOptions());
+        if ("true".equals(options.get("sevenGoLow"))) {
+            return strings.getProperty("newgame.sevengolow");
+        }
         return "";
     }
 
@@ -87,8 +94,9 @@ public class MiniLobbyShithead implements MiniLobbyGame {
             String gameName = gamename.getText();
             int timeout = Integer.parseInt(((Option) ((ComboBox) loader.find("TimeoutValue")).getSelectedItem()).getKey());
 
-            // TODO for now options cant be null, but in next version of lobby it can
-            Game newGame = new Game(gameName, "blank", numPlayers, timeout);
+            Hashtable formData = loader.getFormData();
+            formData.keySet().retainAll(Collections.singletonList("sevenGoLow"));
+            Game newGame = new Game(gameName, SerializerUtil.optionsToJson(formData), numPlayers, timeout);
 
             if (((Button) loader.find("private")).isSelected()) {
                 newGame.setMagicWord(((TextComponent) loader.find("password")).getText());
