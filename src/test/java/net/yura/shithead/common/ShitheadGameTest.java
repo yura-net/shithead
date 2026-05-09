@@ -441,6 +441,76 @@ class ShitheadGameTest {
     }
 
     @Test
+    void testPlayerWinsByPlayingLastUpcardEvenWithNonEmptyDeck() {
+        // Per the rules, drawing from the deck only happens when playing from the hand.
+        // Playing a player's last upcard must end the game even when the deck still has cards.
+        Deck fullDeck = new Deck(1);
+        ShitheadGame g = new ShitheadGame(2, fullDeck);
+        Player a = g.getPlayers().get(0);
+        Player b = g.getPlayers().get(1);
+
+        a.getUpcards().add(Card.getCardByRankSuit(Rank.QUEEN, Suit.HEARTS));
+        b.getHand().add(Card.getCardByRankSuit(Rank.FOUR, Suit.HEARTS));
+
+        g.playerReady(a);
+        g.playerReady(b);
+        g.setCurrentPlayer(0);
+
+        assertTrue(g.playCards(Collections.singletonList(Card.getCardByRankSuit(Rank.QUEEN, Suit.HEARTS))));
+
+        assertTrue(a.getHand().isEmpty(), "Hand must remain empty - playing from upcards must not refill from deck");
+        assertTrue(a.getUpcards().isEmpty());
+        assertTrue(a.getDowncards().isEmpty());
+        assertTrue(g.isFinished(), "Game should be finished after a plays their last upcard");
+    }
+
+    @Test
+    void testPlayerWinsByPlayingLastDowncardEvenWithNonEmptyDeck() {
+        Deck fullDeck = new Deck(1);
+        ShitheadGame g = new ShitheadGame(2, fullDeck);
+        Player a = g.getPlayers().get(0);
+        Player b = g.getPlayers().get(1);
+
+        Card downCard = Card.getCardByRankSuit(Rank.QUEEN, Suit.HEARTS);
+        a.getDowncards().add(downCard);
+        b.getHand().add(Card.getCardByRankSuit(Rank.FOUR, Suit.HEARTS));
+
+        g.playerReady(a);
+        g.playerReady(b);
+        g.setCurrentPlayer(0);
+
+        assertTrue(g.playCards(Collections.singletonList(downCard)));
+
+        assertTrue(a.getHand().isEmpty(), "Hand must remain empty - playing from downcards must not refill from deck");
+        assertTrue(a.getDowncards().isEmpty());
+        assertTrue(g.isFinished(), "Game should be finished after a plays their last downcard");
+    }
+
+    @Test
+    void testPlayingFromHandStillRefillsFromDeck() {
+        // Sanity check: refilling must still happen when playing from the hand.
+        Deck fullDeck = new Deck(1);
+        ShitheadGame g = new ShitheadGame(2, fullDeck);
+        Player a = g.getPlayers().get(0);
+        Player b = g.getPlayers().get(1);
+
+        Card threeOfClubs = Card.getCardByRankSuit(Rank.THREE, Suit.CLUBS);
+        a.getHand().add(threeOfClubs);
+        a.getUpcards().add(Card.getCardByRankSuit(Rank.QUEEN, Suit.HEARTS));
+        b.getHand().add(Card.getCardByRankSuit(Rank.FOUR, Suit.HEARTS));
+
+        g.playerReady(a);
+        g.playerReady(b);
+        g.setCurrentPlayer(0);
+
+        int deckSizeBefore = fullDeck.getCards().size();
+        assertTrue(g.playCards(Collections.singletonList(threeOfClubs)));
+
+        assertEquals(3, a.getHand().size(), "Hand must be refilled to 3 after playing from hand");
+        assertEquals(deckSizeBefore - 3, fullDeck.getCards().size());
+    }
+
+    @Test
     void testSevenGoLow_ruleDoesNotApplyWhenDisabled() {
         // sevenGoLow defaults to false – high card on 7 must be accepted normally
         game.playerReady(p1);
