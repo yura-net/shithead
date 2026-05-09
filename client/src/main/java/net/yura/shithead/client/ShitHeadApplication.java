@@ -141,7 +141,8 @@ public class ShitHeadApplication extends Application implements ActionListener {
             XULLoader gameSetupLoader = createNewGameScreen(properties, loader -> {
                 Spinner players = (Spinner)loader.find("players");
                 int numPlayers = (Integer)players.getValue();
-                createNewSinglePlayerGame(numPlayers);
+                boolean sevenGoLow = ((Button)loader.find("sevenGoLow")).isSelected();
+                createNewSinglePlayerGame(numPlayers, sevenGoLow);
             });
 
             gameSetupLoader.find("gamenameLabel").setVisible(false);
@@ -220,9 +221,10 @@ public class ShitHeadApplication extends Application implements ActionListener {
         frame.repaint();
     }
 
-    private void createNewSinglePlayerGame(int numPlayers) {
+    private void createNewSinglePlayerGame(int numPlayers, boolean sevenGoLow) {
 
         ShitheadGame singlePlayerGame = new ShitheadGame(numPlayers);
+        singlePlayerGame.setSevenGoLow(sevenGoLow);
         singlePlayerGame.deal();
 
         // TODO maybe we want to use AutoPlay for this also?
