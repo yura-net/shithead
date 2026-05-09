@@ -107,7 +107,7 @@ public class SerializerUtil {
     }
 
     public static Map<String, String> optionsFromJson(String json) {
-        if (json == null) {
+        if (json == null || json.isEmpty()) {
             return new HashMap<>();
         }
         try {
