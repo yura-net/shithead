@@ -13,6 +13,5 @@
     "downcards" : [ "9C", "9H", "AS" ]
   } ],
   "playersReady" : [ "Alice" ],
-  "currentPlayerName" : null,
-  "sevenGoLow" : false
+  "currentPlayerName" : null
 }

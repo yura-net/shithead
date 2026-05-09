@@ -38,7 +38,9 @@ public class GameSerializer extends JsonSerializer<ShitheadGame> {
         gen.writeObjectField("playersReady", sortedReadyPlayer);
         Player currentPlayer = game.getCurrentPlayer();
         gen.writeStringField("currentPlayerName", currentPlayer == null ? null : currentPlayer.getName());
-        gen.writeBooleanField("sevenGoLow", game.isSevenGoLow());
+        if (game.isSevenGoLow()) {
+            gen.writeBooleanField("sevenGoLow", true);
+        }
         gen.writeEndObject();
     }
 
