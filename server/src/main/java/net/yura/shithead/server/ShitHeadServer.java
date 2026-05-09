@@ -12,6 +12,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -31,6 +32,8 @@ public class ShitHeadServer extends AbstractTurnBasedServerGame {
     public void startGame(String[] players) {
         // TODO may need to shuffle the players
         game = new ShitheadGame(Arrays.asList(players));
+        Map<String, String> options = SerializerUtil.optionsFromJson(startGameOptions);
+        game.setSevenGoLow("true".equals(options.get("sevenGoLow")));
         game.deal();
         // we are in re-arrange mode, anyone can go
 

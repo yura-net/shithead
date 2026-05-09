@@ -23,6 +23,9 @@
         <choice i18n="true" name="86400" text="newgame.timeout.24hours"/>
     </combobox>
 
+    <checkbox i18n="true" name="sevenGoLow" text="newgame.sevengolow"/>
+    <label text=""/>
+
     <checkbox action="private" i18n="true" name="private" text="newgame.private"/>
     <textfield name="password" enabled="false" property="hint=newgame.password"/>
 

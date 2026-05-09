@@ -1,6 +1,7 @@
 package net.yura.shithead.common.json;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.deser.std.FromStringDeserializer;
@@ -93,6 +94,27 @@ public class SerializerUtil {
         }
         catch (JsonProcessingException e) {
             throw new IllegalArgumentException("bad json " + json, e);
+        }
+    }
+
+    public static String optionsToJson(Map<String, String> options) {
+        try {
+            return mapper.writeValueAsString(options);
+        }
+        catch (JsonProcessingException e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    public static Map<String, String> optionsFromJson(String json) {
+        if (json == null) {
+            return new HashMap<>();
+        }
+        try {
+            return mapper.readValue(json, new TypeReference<Map<String, String>>(){});
+        }
+        catch (JsonProcessingException e) {
+            return new HashMap<>();
         }
     }
 }
