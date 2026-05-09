@@ -342,4 +342,116 @@ class ShitheadGameTest {
         // Attempt to play the Ace on the King
         assertTrue(game.playCards(Collections.singletonList(ace)), "An Ace should be playable on a King");
     }
+
+    @Test
+    void testSevenGoLow_lowCardIsAccepted() {
+        game.setSevenGoLow(true);
+        game.playerReady(p1);
+        game.playerReady(p2);
+
+        // Waste pile topped with a Seven
+        game.setWastePile(new java.util.ArrayList<>(Collections.singletonList(Card.getCardByRankSuit(Rank.SEVEN, Suit.SPADES))));
+
+        // Give p1 a Five (lower than 7) – must be accepted
+        Card five = Card.getCardByRankSuit(Rank.FIVE, Suit.HEARTS);
+        p1.getHand().add(five);
+        p1.getUpcards().add(Card.getCardByRankSuit(Rank.ACE, Suit.CLUBS));
+
+        assertTrue(game.playCards(Collections.singletonList(five)), "A Five should be playable on a Seven when sevenGoLow is enabled");
+        assertEquals(2, game.getWastePile().size());
+    }
+
+    @Test
+    void testSevenGoLow_equalCardIsAccepted() {
+        game.setSevenGoLow(true);
+        game.playerReady(p1);
+        game.playerReady(p2);
+
+        game.setWastePile(new java.util.ArrayList<>(Collections.singletonList(Card.getCardByRankSuit(Rank.SEVEN, Suit.SPADES))));
+
+        Card seven = Card.getCardByRankSuit(Rank.SEVEN, Suit.HEARTS);
+        p1.getHand().add(seven);
+        p1.getUpcards().add(Card.getCardByRankSuit(Rank.ACE, Suit.CLUBS));
+
+        assertTrue(game.playCards(Collections.singletonList(seven)), "A Seven should be playable on a Seven when sevenGoLow is enabled");
+    }
+
+    @Test
+    void testSevenGoLow_higherCardIsRejected() {
+        game.setSevenGoLow(true);
+        game.playerReady(p1);
+        game.playerReady(p2);
+
+        game.setWastePile(new java.util.ArrayList<>(Collections.singletonList(Card.getCardByRankSuit(Rank.SEVEN, Suit.SPADES))));
+
+        // Give p1 a Nine (higher than 7) – must be rejected
+        Card nine = Card.getCardByRankSuit(Rank.NINE, Suit.DIAMONDS);
+        p1.getHand().add(nine);
+
+        assertFalse(game.playCards(Collections.singletonList(nine)), "A Nine should NOT be playable on a Seven when sevenGoLow is enabled");
+        // Waste pile unchanged
+        assertEquals(1, game.getWastePile().size());
+        assertEquals(Rank.SEVEN, game.getWastePile().get(0).getRank());
+    }
+
+    @Test
+    void testSevenGoLow_aceIsRejected() {
+        game.setSevenGoLow(true);
+        game.playerReady(p1);
+        game.playerReady(p2);
+
+        game.setWastePile(new java.util.ArrayList<>(Collections.singletonList(Card.getCardByRankSuit(Rank.SEVEN, Suit.CLUBS))));
+
+        // Ace ranks highest (14) and must be rejected
+        Card ace = Card.getCardByRankSuit(Rank.ACE, Suit.SPADES);
+        p1.getHand().add(ace);
+
+        assertFalse(game.playCards(Collections.singletonList(ace)), "An Ace should NOT be playable on a Seven when sevenGoLow is enabled");
+    }
+
+    @Test
+    void testSevenGoLow_twoIsAlwaysPlayable() {
+        game.setSevenGoLow(true);
+        game.playerReady(p1);
+        game.playerReady(p2);
+
+        game.setWastePile(new java.util.ArrayList<>(Collections.singletonList(Card.getCardByRankSuit(Rank.SEVEN, Suit.HEARTS))));
+
+        Card two = Card.getCardByRankSuit(Rank.TWO, Suit.DIAMONDS);
+        p1.getHand().add(two);
+        p1.getUpcards().add(Card.getCardByRankSuit(Rank.ACE, Suit.CLUBS));
+
+        assertTrue(game.playCards(Collections.singletonList(two)), "A Two should always be playable, even on a Seven with sevenGoLow enabled");
+    }
+
+    @Test
+    void testSevenGoLow_tenIsAlwaysPlayable() {
+        game.setSevenGoLow(true);
+        game.playerReady(p1);
+        game.playerReady(p2);
+
+        game.setWastePile(new java.util.ArrayList<>(Collections.singletonList(Card.getCardByRankSuit(Rank.SEVEN, Suit.DIAMONDS))));
+
+        Card ten = Card.getCardByRankSuit(Rank.TEN, Suit.CLUBS);
+        p1.getHand().add(ten);
+        p1.getUpcards().add(Card.getCardByRankSuit(Rank.ACE, Suit.CLUBS));
+
+        assertTrue(game.playCards(Collections.singletonList(ten)), "A Ten should always be playable (burns the pile), even on a Seven with sevenGoLow enabled");
+        assertEquals(0, game.getWastePile().size(), "Pile should be burned after playing Ten");
+    }
+
+    @Test
+    void testSevenGoLow_ruleDoesNotApplyWhenDisabled() {
+        // sevenGoLow defaults to false – high card on 7 must be accepted normally
+        game.playerReady(p1);
+        game.playerReady(p2);
+
+        game.setWastePile(new java.util.ArrayList<>(Collections.singletonList(Card.getCardByRankSuit(Rank.SEVEN, Suit.SPADES))));
+
+        Card king = Card.getCardByRankSuit(Rank.KING, Suit.HEARTS);
+        p1.getHand().add(king);
+        p1.getUpcards().add(Card.getCardByRankSuit(Rank.ACE, Suit.CLUBS));
+
+        assertTrue(game.playCards(Collections.singletonList(king)), "A King should be playable on a Seven when sevenGoLow is disabled");
+    }
 }

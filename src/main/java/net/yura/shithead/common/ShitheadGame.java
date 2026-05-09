@@ -26,6 +26,7 @@ public class ShitheadGame {
     private List<Card> wastePile = new ArrayList<>();
 
     private int currentPlayer = -1;
+    private boolean sevenGoLow = false;
 
     public void setPlayers(List<Player> players) {
         this.players = players;
@@ -345,7 +346,18 @@ public class ShitheadGame {
         if (rank == Rank.TWO || rank == Rank.TEN || top == null) {
             return true;
         }
+        if (sevenGoLow && top.getRank() == Rank.SEVEN) {
+            return AcesHighCardComparator.getRankValue(rank) <= AcesHighCardComparator.getRankValue(Rank.SEVEN);
+        }
         return AcesHighCardComparator.getRankValue(rank) >= AcesHighCardComparator.getRankValue(top.getRank());
+    }
+
+    public boolean isSevenGoLow() {
+        return sevenGoLow;
+    }
+
+    public void setSevenGoLow(boolean sevenGoLow) {
+        this.sevenGoLow = sevenGoLow;
     }
 
     private void advanceTurn() {
