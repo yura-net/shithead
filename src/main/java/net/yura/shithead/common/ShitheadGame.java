@@ -289,11 +289,7 @@ public class ShitheadGame {
         // apply special rules
         boolean burned = applySpecialRules(rank);
 
-        // Per the rules, drawing from the deck only happens after playing from the hand.
-        // Once a player is playing from upcards or downcards, the deck is no longer drawn from.
-        if (sourcePile == player.getHand()) {
-            refillHand(player);
-        }
+        refillHand(player);
 
         boolean playerWon = player.getHand().isEmpty() && player.getUpcards().isEmpty() && player.getDowncards().isEmpty();
 
