@@ -31,8 +31,9 @@ public class ShitHeadServer extends AbstractTurnBasedServerGame {
     @Override
     public void startGame(String[] players) {
         // TODO may need to shuffle the players
-        game = new ShitheadGame(Arrays.asList(players));
         Map<String, String> options = SerializerUtil.optionsFromJson(startGameOptions);
+        int numDecks = options.containsKey("numDecks") ? Integer.parseInt(options.get("numDecks")) : 1;
+        game = new ShitheadGame(Arrays.asList(players), numDecks);
         game.setSevenGoLow("true".equals(options.get("sevenGoLow")));
         game.deal();
         // we are in re-arrange mode, anyone can go

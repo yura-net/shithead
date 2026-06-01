@@ -6,6 +6,9 @@
     <label i18n="true" text="newgame.players.number"/>
     <spinbox maximum="5" minimum="2" name="players" text="2"/>
 
+    <label i18n="true" text="newgame.decks.number"/>
+    <spinbox maximum="4" minimum="1" name="numDecks" text="1"/>
+
     <label alignment="right" i18n="true" text="newgame.label.timeout" weightx="1" name="timeoutLabel"/>
     <combobox editable="false" name="TimeoutValue" selected="3" text="newgame.timeout.1min">
         <choice i18n="true" name="10" text="newgame.timeout.10sec"/>

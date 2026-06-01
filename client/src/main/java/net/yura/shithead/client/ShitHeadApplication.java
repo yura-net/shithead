@@ -141,8 +141,9 @@ public class ShitHeadApplication extends Application implements ActionListener {
             XULLoader gameSetupLoader = createNewGameScreen(properties, loader -> {
                 Spinner players = (Spinner)loader.find("players");
                 int numPlayers = (Integer)players.getValue();
+                int numDecks = (Integer)((Spinner)loader.find("numDecks")).getValue();
                 boolean sevenGoLow = ((Button)loader.find("sevenGoLow")).isSelected();
-                createNewSinglePlayerGame(numPlayers, sevenGoLow);
+                createNewSinglePlayerGame(numPlayers, numDecks, sevenGoLow);
             });
 
             gameSetupLoader.find("gamenameLabel").setVisible(false);
@@ -221,9 +222,9 @@ public class ShitHeadApplication extends Application implements ActionListener {
         frame.repaint();
     }
 
-    private void createNewSinglePlayerGame(int numPlayers, boolean sevenGoLow) {
+    private void createNewSinglePlayerGame(int numPlayers, int numDecks, boolean sevenGoLow) {
 
-        ShitheadGame singlePlayerGame = new ShitheadGame(numPlayers);
+        ShitheadGame singlePlayerGame = new ShitheadGame(numPlayers, numDecks);
         singlePlayerGame.setSevenGoLow(sevenGoLow);
         singlePlayerGame.deal();
 
