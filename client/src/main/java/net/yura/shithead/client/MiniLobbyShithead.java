@@ -96,7 +96,8 @@ public class MiniLobbyShithead implements MiniLobbyGame {
 
             Hashtable formData = loader.getFormData();
             formData.keySet().retainAll(Collections.singletonList("sevenGoLow"));
-            formData.put("numDecks", String.valueOf(((Spinner)loader.find("numDecks")).getValue()));
+            // TODO form data not collecting spinner data, remove when switched to new SwingME version
+            formData.put("numDecks", String.valueOf((loader.find("numDecks")).getValue()));
             Game newGame = new Game(gameName, SerializerUtil.optionsToJson(formData), numPlayers, timeout);
 
             if (((Button) loader.find("private")).isSelected()) {
