@@ -26,7 +26,6 @@ import net.yura.shithead.uicomponents.CardImageManager;
 import net.yura.shithead.uicomponents.Icons;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Hashtable;
@@ -96,9 +95,8 @@ public class MiniLobbyShithead implements MiniLobbyGame {
             int timeout = Integer.parseInt(((Option) ((ComboBox) loader.find("TimeoutValue")).getSelectedItem()).getKey());
 
             Hashtable formData = loader.getFormData();
-            formData.keySet().retainAll(Arrays.asList("sevenGoLow", "numDecks"));
-            Spinner numDecksSpinner = (Spinner)loader.find("numDecks");
-            formData.put("numDecks", String.valueOf(numDecksSpinner.getValue()));
+            formData.keySet().retainAll(Collections.singletonList("sevenGoLow"));
+            formData.put("numDecks", String.valueOf(((Spinner)loader.find("numDecks")).getValue()));
             Game newGame = new Game(gameName, SerializerUtil.optionsToJson(formData), numPlayers, timeout);
 
             if (((Button) loader.find("private")).isSelected()) {
