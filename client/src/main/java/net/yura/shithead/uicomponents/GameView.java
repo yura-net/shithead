@@ -12,6 +12,7 @@ import net.yura.shithead.common.ShitheadGame;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -29,7 +30,7 @@ public class GameView extends Panel {
     private String myUsername;
     private String title;
     private final List<UICard> deckAndWasteUICards = new ArrayList<UICard>();
-    private final Map<Card, UICard> cardToUICard = new HashMap<>();
+    private final Map<Card, UICard> cardToUICard = new IdentityHashMap<>();
     private final Map<Player, PlayerHand> playerHands = new HashMap<Player, PlayerHand>();
 
     private final int padding = XULLoader.adjustSizeToDensity(2);
@@ -227,7 +228,8 @@ public class GameView extends Panel {
     }
 
     static List<UICard> getUnusedCards(List<UICard> source, List<Card> actual) {
-        List<UICard> available = source.stream().filter(c -> c.getCard() != null && !actual.contains(c.getCard())).collect(Collectors.toList());
+        // use identity (==) not equality to correctly handle duplicate cards from multiple decks
+        List<UICard> available = source.stream().filter(c -> c.getCard() != null && actual.stream().noneMatch(a -> a == c.getCard())).collect(Collectors.toList());
         // if we have removed unneeded cards, but we still have too many unknown cards, take out the extra unknown cards
         while (actual.size() < source.size() - available.size()) {
             available.add(source.stream().filter(c -> c.getCard() == null).findFirst().orElseThrow(() -> new IllegalStateException("no null cards found in: " + source)));
