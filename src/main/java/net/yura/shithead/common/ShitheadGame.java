@@ -46,7 +46,11 @@ public class ShitheadGame {
      * @param playerCount number of players taking part
      */
     public ShitheadGame(int playerCount) {
-        this(playerCount, new Deck(1));
+        this(playerCount, 1);
+    }
+
+    public ShitheadGame(int playerCount, int numDecks) {
+        this(playerCount, new Deck(numDecks));
     }
 
     /**
@@ -68,7 +72,11 @@ public class ShitheadGame {
      * @param playerNames list of player names
      */
     public ShitheadGame(List<String> playerNames) {
-        this(playerNames, new Deck(1));
+        this(playerNames, 1);
+    }
+
+    public ShitheadGame(List<String> playerNames, int numDecks) {
+        this(playerNames, new Deck(numDecks));
     }
 
     /**
