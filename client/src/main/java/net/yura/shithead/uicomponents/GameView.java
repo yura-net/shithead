@@ -230,9 +230,14 @@ public class GameView extends Panel {
     static List<UICard> getUnusedCards(List<UICard> source, List<Card> actual) {
         // use identity (==) not equality to correctly handle duplicate cards from multiple decks
         List<UICard> available = source.stream().filter(c -> c.getCard() != null && actual.stream().noneMatch(a -> a == c.getCard())).collect(Collectors.toList());
-        // if we have removed unneeded cards, but we still have too many unknown cards, take out the extra unknown cards
+        // if we still have too many UICards after freeing those not in actual, free extras —
+        // preferring null (unknown face-down) cards, then any remaining card to handle
+        // edge cases with duplicate card instances across multiple decks
         while (actual.size() < source.size() - available.size()) {
-            available.add(source.stream().filter(c -> c.getCard() == null).findFirst().orElseThrow(() -> new IllegalStateException("no null cards found in: " + source)));
+            UICard excess = source.stream().filter(c -> !available.contains(c) && c.getCard() == null).findFirst()
+                    .orElseGet(() -> source.stream().filter(c -> !available.contains(c)).findFirst()
+                            .orElseThrow(() -> new IllegalStateException("no spare cards found in: " + source)));
+            available.add(excess);
         }
         source.removeAll(available);
         return available;
@@ -348,7 +353,11 @@ public class GameView extends Panel {
 
     private UICard getUICard(List<UICard> available, List<UICard> currentHandCardsAtLocation, Card card, CardLocation location, boolean isFaceUp) {
         UICard uiCard = cardToUICard.get(card);
-        if (uiCard == null) {
+        if (uiCard != null) {
+            // the UICard may also be in available (e.g. its card instance changed identity on a
+            // state refresh); reclaim it so it isn't double-assigned to a second card
+            available.remove(uiCard);
+        } else {
             // if this card is unknown, maybe we can find an existing unknown card at this location, then just use that card
             if (card == null) {
                 Optional<UICard> currentCard = currentHandCardsAtLocation.stream().filter(uic -> uic.getCard() == null).findFirst();
