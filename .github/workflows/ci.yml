@@ -37,51 +37,10 @@ jobs:
         name: JUnit Tests
         path: "**/build/test-results/test/TEST-*.xml"
         reporter: java-junit
-
-    - name: Full test failure details
-      if: ${{ always() }}
-      shell: python
-      run: |
-        import glob
-        import html
-        import os
-        import xml.etree.ElementTree as ET
-
-        report_paths = sorted(glob.glob('**/build/test-results/test/TEST-*.xml', recursive=True))
-        failures = []
-
-        for report_path in report_paths:
-            try:
-                root = ET.parse(report_path).getroot()
-            except ET.ParseError as exc:
-                failures.append((report_path, 'Unable to parse test report', f'{type(exc).__name__}: {exc}'))
-                continue
-
-            for testcase in root.iter('testcase'):
-                test_name = testcase.attrib.get('name', '<unknown test>')
-                class_name = testcase.attrib.get('classname', '')
-                display_name = f'{class_name}.{test_name}' if class_name else test_name
-
-                for result in list(testcase):
-                    if result.tag not in ('failure', 'error'):
-                        continue
-
-                    message = result.attrib.get('message', '').strip()
-                    stack_trace = (result.text or '').strip()
-                    details = stack_trace or message or '<no failure details recorded>'
-                    if message and message not in details:
-                        details = f'{message}\n{details}'
-                    failures.append((report_path, display_name, details))
-
-        if failures:
-            with open(os.environ['GITHUB_STEP_SUMMARY'], 'a', encoding='utf-8') as summary:
-                summary.write('## Full test failure details\n\n')
-                for report_path, display_name, details in failures:
-                    summary.write(f'### ❌ {html.escape(display_name)}\n\n')
-                    summary.write(f'JUnit report: `{report_path}`\n\n')
-                    summary.write('```text\n')
-                    summary.write(details.replace('```', "'''"))
-                    summary.write('\n```\n\n')
+        list-suites: failed
+        list-tests: failed
+        max-annotations: '50'
+        collapsed: never
 
     - name: Upload image on failure
       if: failure()
