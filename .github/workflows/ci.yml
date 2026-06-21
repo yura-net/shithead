@@ -30,13 +30,24 @@ jobs:
     - name: Run tests with Gradle
       run: ./gradlew test
 
+
+#    - name: Test Report
+#      uses: dorny/test-reporter@v3
+#      if: ${{ always() }}
+#      with:
+#        name: JUnit Tests
+#        path: "**/build/test-results/test/TEST-*.xml"
+#        reporter: java-junit
+
+# use another test report instead as this one shows full stack traces
     - name: Test Report
-      uses: dorny/test-reporter@v3
+      uses: mikepenz/action-junit-report@v6
       if: ${{ always() }}
       with:
-        name: JUnit Tests
-        path: "**/build/test-results/test/TEST-*.xml"
-        reporter: java-junit
+        check_name: JUnit Tests
+        report_paths: "**/build/test-results/test/TEST-*.xml"
+        detailed_summary: true
+        include_passed: true
 
     - name: Upload image on failure
       if: failure()

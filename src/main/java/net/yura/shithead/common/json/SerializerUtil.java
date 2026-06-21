@@ -47,6 +47,9 @@ public class SerializerUtil {
         mapper.registerModule(module);
     }
 
+    /**
+     * @see Card#valueOf(String)
+     */
     public static Card cardFromString(String s) {
         if (s == null || s.length() != 2) {
             throw new IllegalArgumentException("Card string must be non-null and 2 characters long, but was: " + s);

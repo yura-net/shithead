@@ -230,17 +230,16 @@ public class GameView extends Panel {
         Animation.registerAnimated(this);
     }
 
-    static List<UICard> getUnusedCards(List<UICard> source, List<Card> actual) {
-        List<UICard> available = source.stream().filter(c -> c.getCard() != null && actual.stream().noneMatch(a -> Objects.equals(a, c.getCard()))).collect(Collectors.toList());
-        // if we still have too many UICards after freeing those not in actual, free extras —
-        // preferring null (unknown face-down) cards first
-        while (actual.size() < source.size() - available.size()) {
-            UICard excess = source.stream().filter(c -> !available.contains(c) && c.getCard() == null).findFirst()
-                    .orElseGet(() -> source.stream().filter(c -> !available.contains(c)).findFirst()
-                            .orElseThrow(() -> new IllegalStateException("no spare cards found in: " + source)));
-            available.add(excess);
+    static List<UICard> getUnusedCards(List<UICard> oldUICards, List<Card> currentCards) {
+        List<Card> actual = new ArrayList<>(currentCards);
+
+        List<UICard> available = oldUICards.stream().filter(c -> c.getCard() != null && !actual.remove(c.getCard())).collect(Collectors.toList());
+
+        // if we have removed unneeded cards, but we still have too many unknown cards, take out the extra unknown cards
+        while (currentCards.size() < oldUICards.size() - available.size()) {
+            available.add(oldUICards.stream().filter(c -> c.getCard() == null && !available.contains(c)).findFirst().orElseThrow(() -> new IllegalStateException("no null cards found in: " + oldUICards)));
         }
-        source.removeAll(available);
+        oldUICards.removeAll(available);
         return available;
     }
 
