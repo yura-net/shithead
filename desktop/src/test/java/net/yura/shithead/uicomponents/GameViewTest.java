@@ -1,5 +1,6 @@
 package net.yura.shithead.uicomponents;
 
+import net.yura.cardsengine.Card;
 import net.yura.cardsengine.Deck;
 import net.yura.mobile.gui.Animation;
 import net.yura.mobile.gui.DesktopPane;
@@ -7,6 +8,7 @@ import net.yura.shithead.client.HeadlessRunner;
 import net.yura.shithead.client.ShitHeadApplication;
 import net.yura.shithead.common.Player;
 import net.yura.shithead.common.ShitheadGame;
+import net.yura.shithead.common.json.SerializerUtil;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import java.awt.EventQueue;
@@ -19,6 +21,8 @@ import java.util.concurrent.TimeUnit;
 
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 /**
@@ -194,5 +198,154 @@ class GameViewTest {
             }
         }
         return false;
+    }
+
+    @Test
+    void testGetUnusedCards_AllMatched() {
+        Card c1 = SerializerUtil.cardFromString("7H");
+        Card c2 = SerializerUtil.cardFromString("8S");
+        List<UICard> source = new ArrayList<>(Arrays.asList(
+                new UICard(c1, CardLocation.HAND, true, 0, 0),
+                new UICard(c2, CardLocation.HAND, true, 0, 0)
+        ));
+        List<Card> actual = Arrays.asList(c1, c2);
+
+        List<UICard> result = GameView.getUnusedCards(source, actual);
+
+        assertTrue(result.isEmpty());
+        assertEquals(2, source.size());
+    }
+
+    @Test
+    void testGetUnusedCards_SomeUnmatched() {
+        Card c1 = SerializerUtil.cardFromString("7H");
+        Card c2 = SerializerUtil.cardFromString("8S");
+        Card c3 = SerializerUtil.cardFromString("9D");
+        UICard ui1 = new UICard(c1, CardLocation.HAND, true, 0, 0);
+        UICard ui2 = new UICard(c2, CardLocation.HAND, true, 0, 0);
+        List<UICard> source = new ArrayList<>(Arrays.asList(ui1, ui2));
+        List<Card> actual = Arrays.asList(c1, c3); // c2 is missing from actual, c3 is new
+
+        List<UICard> result = GameView.getUnusedCards(source, actual);
+
+        assertEquals(1, result.size());
+        assertEquals(ui2, result.get(0));
+        assertEquals(1, source.size());
+        assertEquals(ui1, source.get(0));
+    }
+
+    @Test
+    void testGetUnusedCards_NullCards() {
+        Card c1 = SerializerUtil.cardFromString("7H");
+        UICard ui1 = new UICard(c1, CardLocation.HAND, true, 0, 0);
+        UICard uiNull1 = new UICard(null, CardLocation.DECK, false, 0, 0);
+        UICard uiNull2 = new UICard(null, CardLocation.DECK, false, 0, 0);
+        List<UICard> source = new ArrayList<>(Arrays.asList(ui1, uiNull1, uiNull2));
+
+        // actual only has c1 and one unknown card. So one null UICard should be returned.
+        List<Card> actual = Arrays.asList(c1, null);
+
+        List<UICard> result = GameView.getUnusedCards(source, actual);
+
+        assertEquals(1, result.size());
+        assertEquals(uiNull1, result.get(0));
+        assertEquals(2, source.size());
+        assertTrue(source.contains(ui1));
+        assertTrue(source.contains(uiNull2));
+    }
+
+    @Test
+    void testGetUnusedCards_EmptyActual() {
+        Card c1 = SerializerUtil.cardFromString("7H");
+        UICard ui1 = new UICard(c1, CardLocation.HAND, true, 0, 0);
+        List<UICard> source = new ArrayList<>(Arrays.asList(ui1));
+        List<Card> actual = Arrays.asList();
+
+        List<UICard> result = GameView.getUnusedCards(source, actual);
+
+        assertEquals(1, result.size());
+        assertEquals(ui1, result.get(0));
+        assertTrue(source.isEmpty());
+    }
+
+    @Test
+    void testGetUnusedCards_Exception() {
+        Card c1 = SerializerUtil.cardFromString("7H");
+        UICard ui1 = new UICard(c1, CardLocation.HAND, true, 0, 0);
+        List<UICard> source = new ArrayList<>(Arrays.asList(ui1));
+        // We have 1 card in source (ui1), and actual has 2 cards.
+        // The logic expects actual.size() <= source.size() - available.size()
+        // Wait, the while loop is: while (actual.size() < source.size() - available.size())
+        // That means it removes extra cards from source if actual is smaller.
+        // If actual is LARGER, the loop won't run.
+
+        // Let's re-read the code:
+        // List<UICard> available = source.stream().filter(c -> c.getCard() != null && !actual.contains(c.getCard())).collect(Collectors.toList());
+        // while (actual.size() < source.size() - available.size()) {
+        //     available.add(source.stream().filter(c -> c.getCard() == null).findFirst().orElseThrow(() -> new IllegalStateException("no null cards found in: " + source)));
+        // }
+        // source.removeAll(available);
+
+        // Case where it throws: actual.size() < source.size() - available.size() AND no null cards in source.
+        // source = [ui1(7H)], actual = [], available = [ui1]
+        // actual.size() = 0, source.size() - available.size() = 1 - 1 = 0. 0 < 0 is false.
+
+        // Try: source = [ui1(7H), ui2(8H)], actual = [7H], available = [ui2]
+        // actual.size() = 1, source.size() - available.size() = 2 - 1 = 1. 1 < 1 is false.
+
+        // Try: source = [ui1(7H)], actual = [null]
+        // available = []
+        // actual.size() = 1, source.size() - available.size() = 1 - 0 = 1. 1 < 1 is false.
+
+        // Try: source = [ui1(7H)], actual = [null, null]
+        // available = []
+        // actual.size() = 2, source.size() - available.size() = 1. 2 < 1 is false.
+
+        // Wait, the loop condition is `actual.size() < source.size() - available.size()`.
+        // This means if we have MORE cards in source (after removing definitely unused ones) than in actual,
+        // we must remove some more, which MUST be null cards.
+
+        // source = [ui1(7H), ui2(8H)], actual = []
+        // available = [ui1, ui2]
+        // actual.size() = 0, source.size() - available.size() = 2 - 2 = 0. Loop doesn't run.
+
+        // source = [uiNull1], actual = []
+        // available = []
+        // actual.size() = 0, source.size() - available.size() = 1 - 0 = 1.
+        // 0 < 1 is TRUE.
+        // Loop runs: available.add(uiNull1)
+        // result = [uiNull1], source = []
+
+        // To trigger exception:
+        // actual.size() < source.size() - available.size() AND no null cards.
+        // source = [ui1(7H)], actual = [null]
+        // available = [] (c1 is not null, but is NOT in actual, wait... actual is [null])
+        // c1 is 7H, actual is [null]. actual.contains(c1) is false.
+        // available = [ui1]
+        // 1 < 1 - 1 = 0. False.
+
+        // Let's try:
+        // source = [ui1(7H), ui2(8H)], actual = [7H, null]
+        // available = [ui2]
+        // 2 < 2 - 1 = 1. False.
+
+        // It seems it only throws if we have too many KNOWN cards that ARE in actual?
+        // No, `available` already contains cards that are NOT in actual.
+        // So `source.size() - available.size()` are the cards in source that ARE in actual (or are null).
+        // If that number is > actual.size(), it means we have more UICards for these cards than actual cards.
+        // This can only happen if we have multiple UICards for the same Card (shouldn't happen) or multiple null UICards.
+
+        // If source = [ui1(7H), ui2(7H)], actual = [7H]
+        // available = [] (because 7H is in actual)
+        // 1 < 2 - 0 = 2. TRUE.
+        // It tries to find a null card to remove. But there are none. Throws!
+
+        List<UICard> source2 = new ArrayList<>(Arrays.asList(
+                new UICard(c1, CardLocation.HAND, true, 0, 0),
+                new UICard(c1, CardLocation.HAND, true, 0, 0)
+        ));
+        List<Card> actual2 = Arrays.asList(c1);
+
+        assertThrows(IllegalStateException.class, () -> GameView.getUnusedCards(source2, actual2));
     }
 }
