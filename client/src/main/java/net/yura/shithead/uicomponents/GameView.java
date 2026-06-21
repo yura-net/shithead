@@ -32,6 +32,9 @@ public class GameView extends Panel {
     private final List<UICard> deckAndWasteUICards = new ArrayList<UICard>();
     private final Map<Card, UICard> cardToUICard = new IdentityHashMap<>();
     private final Map<Player, PlayerHand> playerHands = new HashMap<Player, PlayerHand>();
+    // tracks UICards already assigned in the current layoutCards() pass to prevent double-assignment
+    // when multiple game positions hold the same Card singleton (e.g. two decks with shared instances)
+    private final java.util.Set<UICard> claimedInCurrentLayout = Collections.newSetFromMap(new IdentityHashMap<>());
 
     private final int padding = XULLoader.adjustSizeToDensity(2);
     private static final Font bigFont = new Font(javax.microedition.lcdui.Font.FACE_PROPORTIONAL, javax.microedition.lcdui.Font.STYLE_PLAIN, javax.microedition.lcdui.Font.SIZE_LARGE);
@@ -128,6 +131,8 @@ public class GameView extends Panel {
      * 4) TODO the cards that are left should be animated off screen
      */
     private void layoutCards() {
+
+        claimedInCurrentLayout.clear();
 
         List<Player> players = game.getPlayers();
         int localPlayerIndex = -1;
@@ -361,7 +366,13 @@ public class GameView extends Panel {
             // the UICard may also be in available (e.g. its card instance changed identity on a
             // state refresh); reclaim it so it isn't double-assigned to a second card
             available.remove(uiCard);
-        } else {
+            // if the UICard was already claimed this layout pass (e.g. a Card singleton appears in
+            // two positions when using multiple decks), don't reuse it — fall through to available
+            if (claimedInCurrentLayout.contains(uiCard)) {
+                uiCard = null;
+            }
+        }
+        if (uiCard == null) {
             // if this card is unknown, maybe we can find an existing unknown card at this location, then just use that card
             if (card == null) {
                 Optional<UICard> currentCard = currentHandCardsAtLocation.stream().filter(uic -> uic.getCard() == null).findFirst();
@@ -392,6 +403,7 @@ public class GameView extends Panel {
             }
         }
         updateCardInfo(uiCard, card, location, isFaceUp);
+        claimedInCurrentLayout.add(uiCard);
         return uiCard;
     }
 
