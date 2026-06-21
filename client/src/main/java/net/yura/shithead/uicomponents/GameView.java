@@ -60,7 +60,11 @@ public class GameView extends Panel {
         repaint();
     }
 
-    private PlayerHand getPlayerHand(String username) {
+    List<UICard> getDeckAndWasteCards() {
+        return deckAndWasteUICards;
+    }
+
+    PlayerHand getPlayerHand(String username) {
         return playerHands.get(game.getPlayer(username));
     }
 
