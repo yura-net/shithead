@@ -16,6 +16,7 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -32,9 +33,6 @@ public class GameView extends Panel {
     private final List<UICard> deckAndWasteUICards = new ArrayList<UICard>();
     private final Map<Card, UICard> cardToUICard = new IdentityHashMap<>();
     private final Map<Player, PlayerHand> playerHands = new HashMap<Player, PlayerHand>();
-    // tracks UICards already assigned in the current layoutCards() pass to prevent double-assignment
-    // when multiple game positions hold the same Card singleton (e.g. two decks with shared instances)
-    private final java.util.Set<UICard> claimedInCurrentLayout = Collections.newSetFromMap(new IdentityHashMap<>());
 
     private final int padding = XULLoader.adjustSizeToDensity(2);
     private static final Font bigFont = new Font(javax.microedition.lcdui.Font.FACE_PROPORTIONAL, javax.microedition.lcdui.Font.STYLE_PLAIN, javax.microedition.lcdui.Font.SIZE_LARGE);
@@ -132,7 +130,8 @@ public class GameView extends Panel {
      */
     private void layoutCards() {
 
-        claimedInCurrentLayout.clear();
+        // prevents a Card singleton (shared across multiple decks) from being mapped to the same UICard twice
+        Set<UICard> claimedThisPass = Collections.newSetFromMap(new IdentityHashMap<>());
 
         List<Player> players = game.getPlayers();
         int localPlayerIndex = -1;
@@ -161,7 +160,7 @@ public class GameView extends Panel {
             // 360 deg is 2 * PI, ZERO DEGREES POINTS TO THE RIGHT!!!
             double angle = Math.PI/2 + ((Math.PI*2)-spaceForOthers)/2 + (spaceForOthers / numSlots * playerPosition);
             // WARNING! this calculation sends an incorrect value for position 0, but it is ignored by the method
-            layoutPlayer(available, player, angle, i == localPlayerIndex);
+            layoutPlayer(available, claimedThisPass, player, angle, i == localPlayerIndex);
         }
         // check if any player has got rid of all cards and left the game
         playerHands.entrySet().removeIf(h -> {
@@ -194,7 +193,7 @@ public class GameView extends Panel {
             for (int i = 0; i < wastePileSize; i++) {
                 Card card = wastePile.get(i);
 
-                UICard wastePileCard = getUICard(available, Collections.emptyList(), card, CardLocation.WASTE, true);
+                UICard wastePileCard = getUICard(available, claimedThisPass, Collections.emptyList(), card, CardLocation.WASTE, true);
                 wastePileCard.setPosition(centerX + padding / 2, yStartWaste);
                 if (i < (wastePileSize - 3)) {
                     yStartWaste = yStartWaste + dip;
@@ -267,7 +266,7 @@ public class GameView extends Panel {
                 height / 2 - XULLoader.adjustSizeToDensity(90));
     }
 
-    private void layoutPlayer(List<UICard> available, Player player, double angle, boolean isLocalPlayer) {
+    private void layoutPlayer(List<UICard> available, Set<UICard> claimedThisPass, Player player, double angle, boolean isLocalPlayer) {
         int centerX = width / 2;
         int centerY = height / 2;
         int radiusX = getRadiusX();
@@ -294,19 +293,19 @@ public class GameView extends Panel {
         available.addAll(0, getUnusedCards(oldHandUiCards, player.getHand()));
 
         List<UICard> downUiCards = player.getDowncards().stream()
-                .map(card -> getUICard(available, oldDownUiCards, card, CardLocation.DOWN_CARDS, false))
+                .map(card -> getUICard(available, claimedThisPass, oldDownUiCards, card, CardLocation.DOWN_CARDS, false))
                 .collect(Collectors.toList());
         oldDownUiCards.removeAll(downUiCards);
         available.addAll(0, oldDownUiCards);
 
         List<UICard> handUiCards = player.getHand().stream()
-                .map(card -> getUICard(available, oldHandUiCards, card, CardLocation.HAND, isLocalPlayer))
+                .map(card -> getUICard(available, claimedThisPass, oldHandUiCards, card, CardLocation.HAND, isLocalPlayer))
                 .collect(Collectors.toList());
         oldHandUiCards.removeAll(handUiCards);
         available.addAll(0, oldHandUiCards);
 
         List<UICard> upUiCards = player.getUpcards().stream()
-                .map(card -> getUICard(available, oldUpUiCards, card, CardLocation.UP_CARDS, true))
+                .map(card -> getUICard(available, claimedThisPass, oldUpUiCards, card, CardLocation.UP_CARDS, true))
                 .collect(Collectors.toList());
         oldUpUiCards.removeAll(upUiCards);
         available.addAll(0, oldUpUiCards);
@@ -360,7 +359,7 @@ public class GameView extends Panel {
         }
     }
 
-    private UICard getUICard(List<UICard> available, List<UICard> currentHandCardsAtLocation, Card card, CardLocation location, boolean isFaceUp) {
+    private UICard getUICard(List<UICard> available, Set<UICard> claimedThisPass, List<UICard> currentHandCardsAtLocation, Card card, CardLocation location, boolean isFaceUp) {
         UICard uiCard = cardToUICard.get(card);
         if (uiCard != null) {
             // the UICard may also be in available (e.g. its card instance changed identity on a
@@ -368,7 +367,7 @@ public class GameView extends Panel {
             available.remove(uiCard);
             // if the UICard was already claimed this layout pass (e.g. a Card singleton appears in
             // two positions when using multiple decks), don't reuse it — fall through to available
-            if (claimedInCurrentLayout.contains(uiCard)) {
+            if (claimedThisPass.contains(uiCard)) {
                 uiCard = null;
             }
         }
@@ -403,7 +402,7 @@ public class GameView extends Panel {
             }
         }
         updateCardInfo(uiCard, card, location, isFaceUp);
-        claimedInCurrentLayout.add(uiCard);
+        claimedThisPass.add(uiCard);
         return uiCard;
     }
 
