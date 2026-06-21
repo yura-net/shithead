@@ -10,12 +10,15 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.awt.EventQueue;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
 
 /**
  * Verifies pixel positions of every card after the initial deal animation
@@ -93,7 +96,23 @@ class GameViewTest {
     void testInitialCardPositionsAfterAnimation() throws Exception {
         ShitheadGame game = new ShitheadGame(Arrays.asList("alice", "bob", "carol", "dave", "eve"));
         game.deal();
+        assertLayout(game);
+    }
 
+    /**
+     * With two decks the deck is larger but each player still holds 3 down/up/hand cards, so
+     * all pixel positions are identical to the single-deck case.  The important thing this test
+     * checks is that duplicate cards (same rank+suit from each deck) each get their own UICard
+     * and end up at the correct, distinct position.
+     */
+    @Test
+    void testInitialCardPositionsAfterAnimation_twoDecks() throws Exception {
+        ShitheadGame game = new ShitheadGame(Arrays.asList("alice", "bob", "carol", "dave", "eve"), 2);
+        game.deal();
+        assertLayout(game);
+    }
+
+    private static void assertLayout(ShitheadGame game) throws Exception {
         GameView view = new GameView();
         view.setGame(game);
         view.setMyUsername("alice");
@@ -122,6 +141,10 @@ class GameViewTest {
             assertEquals(CardLocation.DECK, deckCards.get(i).getLocation());
             assertCardAt("deck[" + i + "]", deckCards.get(i), DECK_X, DECK_YS[i]);
         }
+
+        // Every UICard across all player hands must be a distinct object — if two cards share a
+        // UICard the one-UICard-per-card invariant (needed for correct positioning) is broken.
+        assertAllUICardsUnique(game, view);
     }
 
     private static void assertPlayerCards(String name, PlayerHand hand,
@@ -141,6 +164,23 @@ class GameViewTest {
     private static void assertCardAt(String label, UICard card, int expectedX, int expectedY) {
         assertEquals(expectedX, card.getX(), label + " x");
         assertEquals(expectedY, card.getY(), label + " y");
+    }
+
+    private static void assertAllUICardsUnique(ShitheadGame game, GameView view) {
+        IdentityHashMap<UICard, String> seen = new IdentityHashMap<>();
+        List<UICard> allCards = new ArrayList<>(view.getDeckAndWasteCards());
+        for (Player player : game.getPlayers()) {
+            PlayerHand hand = view.getPlayerHand(player.getName());
+            if (hand != null) {
+                allCards.addAll(hand.getUiCards());
+            }
+        }
+        for (UICard card : allCards) {
+            String prev = seen.put(card, card.toString());
+            if (prev != null) {
+                fail("UICard used for multiple cards: " + card);
+            }
+        }
     }
 
     private static boolean anyCardMoving(ShitheadGame game, GameView view) {
