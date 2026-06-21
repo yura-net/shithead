@@ -31,16 +31,15 @@ jobs:
       run: ./gradlew test
 
     - name: Test Report
-      uses: dorny/test-reporter@v3
+      uses: mikepenz/action-junit-report@v6
       if: ${{ always() }}
       with:
-        name: JUnit Tests
-        path: "**/build/test-results/test/TEST-*.xml"
-        reporter: java-junit
-        list-suites: failed
-        list-tests: failed
-        max-annotations: '50'
-        collapsed: never
+        check_name: JUnit Tests
+        report_paths: "**/build/test-results/test/TEST-*.xml"
+        detailed_summary: true
+        include_skipped: false
+        skip_success_summary: true
+        truncate_stack_traces: false
 
     - name: Upload image on failure
       if: failure()
