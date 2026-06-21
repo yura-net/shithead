@@ -230,13 +230,16 @@ public class GameView extends Panel {
         Animation.registerAnimated(this);
     }
 
-    static List<UICard> getUnusedCards(List<UICard> source, List<Card> actual) {
-        List<UICard> available = source.stream().filter(c -> c.getCard() != null && !actual.contains(c.getCard())).collect(Collectors.toList());
+    static List<UICard> getUnusedCards(List<UICard> oldUICards, List<Card> currentCards) {
+        List<Card> actual = new ArrayList<>(currentCards);
+
+        List<UICard> available = oldUICards.stream().filter(c -> c.getCard() != null && !actual.remove(c.getCard())).collect(Collectors.toList());
+
         // if we have removed unneeded cards, but we still have too many unknown cards, take out the extra unknown cards
-        while (actual.size() < source.size() - available.size()) {
-            available.add(source.stream().filter(c -> c.getCard() == null).findFirst().orElseThrow(() -> new IllegalStateException("no null cards found in: " + source)));
+        while (currentCards.size() < oldUICards.size() - available.size()) {
+            available.add(oldUICards.stream().filter(c -> c.getCard() == null && !available.contains(c)).findFirst().orElseThrow(() -> new IllegalStateException("no null cards found in: " + oldUICards)));
         }
-        source.removeAll(available);
+        oldUICards.removeAll(available);
         return available;
     }
 
