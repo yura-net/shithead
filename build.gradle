@@ -13,10 +13,6 @@ allprojects {
 
     tasks.withType(Test) {
         useJUnitPlatform()
-        testLogging {
-            events 'failed'
-            exceptionFormat 'full'
-        }
         reports {
             junitXml.required.set(true)
         }
