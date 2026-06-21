@@ -360,17 +360,36 @@ public class GameView extends Panel {
     }
 
     private UICard getUICard(List<UICard> available, Set<UICard> claimedThisPass, List<UICard> currentHandCardsAtLocation, Card card, CardLocation location, boolean isFaceUp) {
-        UICard uiCard = cardToUICard.get(card);
-        if (uiCard != null) {
-            // the UICard may also be in available (e.g. its card instance changed identity on a
-            // state refresh); reclaim it so it isn't double-assigned to a second card
-            available.remove(uiCard);
-            // if the UICard was already claimed this layout pass (e.g. a Card singleton appears in
-            // two positions when using multiple decks), don't reuse it — fall through to available
-            if (claimedThisPass.contains(uiCard)) {
-                uiCard = null;
+        UICard uiCard = null;
+
+        // Prefer a UICard already at this location for this card (by identity).
+        // This is critical when the same Card singleton appears multiple times (multi-deck): the
+        // global map can only track one UICard per singleton, so we'd otherwise steal a UICard that
+        // belongs to a different player or a different slot in the same player's hand.
+        if (card != null) {
+            Optional<UICard> existing = currentHandCardsAtLocation.stream()
+                    .filter(c -> c.getCard() == card && !claimedThisPass.contains(c))
+                    .findFirst();
+            if (existing.isPresent()) {
+                uiCard = existing.get();
+                currentHandCardsAtLocation.remove(uiCard);
             }
         }
+
+        if (uiCard == null) {
+            // Fall back to the global map — useful for cards that changed location (e.g. played to waste)
+            uiCard = cardToUICard.get(card);
+            if (uiCard != null) {
+                // the UICard may also be in available (e.g. its card instance changed identity on a
+                // state refresh); reclaim it so it isn't double-assigned to a second card
+                available.remove(uiCard);
+                // if already claimed this pass (another occurrence of the same singleton), fall through
+                if (claimedThisPass.contains(uiCard)) {
+                    uiCard = null;
+                }
+            }
+        }
+
         if (uiCard == null) {
             // if this card is unknown, maybe we can find an existing unknown card at this location, then just use that card
             if (card == null) {
@@ -401,6 +420,7 @@ public class GameView extends Panel {
                 }
             }
         }
+
         updateCardInfo(uiCard, card, location, isFaceUp);
         claimedThisPass.add(uiCard);
         return uiCard;
