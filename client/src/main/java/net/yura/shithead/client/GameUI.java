@@ -25,7 +25,7 @@ public class GameUI implements ActionListener, GameViewListener {
 
     // UI components
     Properties uiTextString;
-    private final GameView gameView;
+    final GameView gameView;
     private final Button playButton;
     private final Menu menu;
 
