@@ -1,5 +1,6 @@
 package net.yura.shithead.uicomponents;
 
+import net.yura.cardsengine.Deck;
 import net.yura.mobile.gui.Animation;
 import net.yura.mobile.gui.DesktopPane;
 import net.yura.shithead.client.HeadlessRunner;
@@ -8,12 +9,12 @@ import net.yura.shithead.common.Player;
 import net.yura.shithead.common.ShitheadGame;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-
 import java.awt.EventQueue;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
 import static org.awaitility.Awaitility.await;
@@ -94,9 +95,7 @@ class GameViewTest {
 
     @Test
     void testInitialCardPositionsAfterAnimation() throws Exception {
-        ShitheadGame game = new ShitheadGame(Arrays.asList("alice", "bob", "carol", "dave", "eve"));
-        game.deal();
-        assertLayout(game);
+        assertLayout(newGame(1));
     }
 
     /**
@@ -107,9 +106,20 @@ class GameViewTest {
      */
     @Test
     void testInitialCardPositionsAfterAnimation_twoDecks() throws Exception {
-        ShitheadGame game = new ShitheadGame(Arrays.asList("alice", "bob", "carol", "dave", "eve"), 2);
+        assertLayout(newGame(2));
+    }
+
+    @Test
+    void testInitialCardPositionsAfterAnimation_threeDecks() throws Exception {
+        assertLayout(newGame(3));
+    }
+
+    private static ShitheadGame newGame(int decks) {
+        Deck deck = new Deck(decks);
+        deck.setRandom(new Random(123));
+        ShitheadGame game = new ShitheadGame(Arrays.asList("alice", "bob", "carol", "dave", "eve"), deck);
         game.deal();
-        assertLayout(game);
+        return game;
     }
 
     private static void assertLayout(ShitheadGame game) throws Exception {
@@ -119,6 +129,13 @@ class GameViewTest {
         view.setSize(SCREEN_W, SCREEN_H); // triggers doLayout() → layoutCards()
 
         Animation.FPS = 1000; // speed up animation thread
+
+        assertLayout(game, view);
+        // we want to make sure its still correct after doing another layout
+        assertLayout(game, view);
+    }
+
+    private static void assertLayout(ShitheadGame game, GameView view) {
         view.doLayout();
 
         await().atMost(10, TimeUnit.SECONDS).until(() -> !anyCardMoving(game, view));
@@ -148,7 +165,7 @@ class GameViewTest {
     }
 
     private static void assertPlayerCards(String name, PlayerHand hand,
-                                           int cx, int downY, int upY, int handY) {
+                                          int cx, int downY, int upY, int handY) {
         assertLayer(name + " down", hand.getUiCards(CardLocation.DOWN_CARDS), cx, downY);
         assertLayer(name + " up",   hand.getUiCards(CardLocation.UP_CARDS),   cx, upY);
         assertLayer(name + " hand", hand.getUiCards(CardLocation.HAND),       cx, handY);
