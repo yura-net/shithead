@@ -231,11 +231,9 @@ public class GameView extends Panel {
     }
 
     static List<UICard> getUnusedCards(List<UICard> source, List<Card> actual) {
-        // use identity (==) not equality to correctly handle duplicate cards from multiple decks
         List<UICard> available = source.stream().filter(c -> c.getCard() != null && actual.stream().noneMatch(a -> Objects.equals(a, c.getCard()))).collect(Collectors.toList());
         // if we still have too many UICards after freeing those not in actual, free extras —
-        // preferring null (unknown face-down) cards, then any remaining card to handle
-        // edge cases with duplicate card instances across multiple decks
+        // preferring null (unknown face-down) cards first
         while (actual.size() < source.size() - available.size()) {
             UICard excess = source.stream().filter(c -> !available.contains(c) && c.getCard() == null).findFirst()
                     .orElseGet(() -> source.stream().filter(c -> !available.contains(c)).findFirst()
@@ -355,9 +353,9 @@ public class GameView extends Panel {
     }
 
     private UICard getUICard(List<UICard> available, List<UICard> currentHandCardsAtLocation, Card card, CardLocation location, boolean isFaceUp) {
-        // Prefer a UICard already at this location for this card, matched by identity (==).
-        // Using identity (not equals) means each Card object — even singletons shared across decks —
-        // maps to its own UICard positionally, preventing cross-player contamination.
+        // Prefer a UICard already at this location for this card, matched by value (equals).
+        // Searching positionally within each player's own list means Card singletons shared across
+        // decks each get their own UICard without cross-player contamination.
         UICard uiCard = currentHandCardsAtLocation.stream()
                 .filter(c -> Objects.equals(c.getCard(), card))
                 .findFirst().orElse(null);
@@ -366,7 +364,7 @@ public class GameView extends Panel {
         }
 
         if (uiCard == null && !available.isEmpty()) {
-            // prefer exact identity match, fall back to a spare null (deck) card
+            // prefer exact value match, fall back to a spare null (deck) card
             uiCard = available.stream().filter(c -> Objects.equals(c.getCard(), card)).findFirst().orElseGet(
                     () -> available.stream().filter(c -> c.getCard() == null).findFirst().orElse(null));
             if (uiCard != null) {
