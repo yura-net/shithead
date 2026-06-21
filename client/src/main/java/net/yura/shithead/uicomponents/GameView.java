@@ -29,7 +29,6 @@ public class GameView extends Panel {
     private String myUsername;
     private String title;
     private final List<UICard> deckAndWasteUICards = new ArrayList<UICard>();
-    private final Map<Card, UICard> cardToUICard = new HashMap<>();
     private final Map<Player, PlayerHand> playerHands = new HashMap<Player, PlayerHand>();
 
     private final int padding = XULLoader.adjustSizeToDensity(2);
@@ -352,35 +351,30 @@ public class GameView extends Panel {
     }
 
     private UICard getUICard(List<UICard> available, List<UICard> currentHandCardsAtLocation, Card card, CardLocation location, boolean isFaceUp) {
-        UICard uiCard = cardToUICard.get(card);
-        if (uiCard == null) {
-            // if this card is unknown, maybe we can find an existing unknown card at this location, then just use that card
-            if (card == null) {
-                Optional<UICard> currentCard = currentHandCardsAtLocation.stream().filter(uic -> uic.getCard() == null).findFirst();
-                if (currentCard.isPresent()) {
-                    currentHandCardsAtLocation.remove(currentCard.get());
-                    uiCard = currentCard.get();
-                }
-            }
+        UICard uiCard = null;
+        // Card instances are singletons, so the same Card object can appear more than once when a game uses multiple decks.
+        // Reuse only a UICard that belongs to this exact location/current pool instead of globally mapping one Card to one UICard.
+        Optional<UICard> currentCard = currentHandCardsAtLocation.stream().filter(uic -> uic.getCard() == card).findFirst();
+        if (currentCard.isPresent()) {
+            currentHandCardsAtLocation.remove(currentCard.get());
+            uiCard = currentCard.get();
+        }
 
+        if (uiCard == null && !available.isEmpty()) {
+            uiCard = available.stream().filter(c -> c.getCard() == card).findFirst().orElseGet(
+                    () -> available.stream().filter(c -> c.getCard() == null).findFirst().orElse(null)
+            );
+            if (uiCard != null) {
+                available.remove(uiCard);
+            }
+        }
+        if (uiCard == null) {
+            uiCard = StreamSupport.stream(((Iterable<UICard>) () -> new ReverseListIterator<>(deckAndWasteUICards)).spliterator(), false)
+                    .filter(c -> c.getLocation() == CardLocation.DECK).findFirst().orElse(null);
             if (uiCard == null) {
-                if (!available.isEmpty()) {
-                    uiCard = available.stream().filter(c -> c.getCard() == card).findFirst().orElseGet(
-                            () -> available.stream().filter(c -> c.getCard() == null).findFirst().orElse(null)
-                    );
-                    if (uiCard != null) {
-                        available.remove(uiCard);
-                    }
-                }
-                if (uiCard == null) {
-                    uiCard = StreamSupport.stream(((Iterable<UICard>) () -> new ReverseListIterator<>(deckAndWasteUICards)).spliterator(), false)
-                            .filter(c -> c.getLocation() == CardLocation.DECK).findFirst().orElse(null);
-                    if (uiCard == null) {
-                        // dealing a brand new card, this should ONLY happen at the start of the game
-                        System.out.println("Dealing new card on table (ONLY AT START OF GAME)");
-                        uiCard = new UICard();
-                    }
-                }
+                // dealing a brand new card, this should ONLY happen at the start of the game
+                System.out.println("Dealing new card on table (ONLY AT START OF GAME)");
+                uiCard = new UICard();
             }
         }
         updateCardInfo(uiCard, card, location, isFaceUp);
@@ -402,9 +396,6 @@ public class GameView extends Panel {
         uiCard.setPlayable(false);
         uiCard.setLocation(location);
         uiCard.setFaceUp(isFaceUp);
-        if (card != null) {
-            cardToUICard.put(card, uiCard);
-        }
     }
 
     @Override

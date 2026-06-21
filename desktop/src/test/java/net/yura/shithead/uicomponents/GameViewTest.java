@@ -105,6 +105,18 @@ class GameViewTest {
         assertLayout(game);
     }
 
+    @Test
+    void testInitialCardPositionsAfterAnimationWithTwoDecks() throws Exception {
+        ShitheadGame game = newGame(2);
+        assertLayout(game);
+    }
+
+    @Test
+    void testInitialCardPositionsAfterAnimationWithThreeDecks() throws Exception {
+        ShitheadGame game = newGame(3);
+        assertLayout(game);
+    }
+
     private static ShitheadGame newGame(int decks) {
         Deck deck = new Deck(decks);
         deck.setRandom(new Random(123));
