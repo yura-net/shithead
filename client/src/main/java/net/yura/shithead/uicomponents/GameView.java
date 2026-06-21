@@ -12,11 +12,8 @@ import net.yura.shithead.common.ShitheadGame;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -31,7 +28,6 @@ public class GameView extends Panel {
     private String myUsername;
     private String title;
     private final List<UICard> deckAndWasteUICards = new ArrayList<UICard>();
-    private final Map<Card, UICard> cardToUICard = new IdentityHashMap<>();
     private final Map<Player, PlayerHand> playerHands = new HashMap<Player, PlayerHand>();
 
     private final int padding = XULLoader.adjustSizeToDensity(2);
@@ -130,9 +126,6 @@ public class GameView extends Panel {
      */
     private void layoutCards() {
 
-        // prevents a Card singleton (shared across multiple decks) from being mapped to the same UICard twice
-        Set<UICard> claimedThisPass = Collections.newSetFromMap(new IdentityHashMap<>());
-
         List<Player> players = game.getPlayers();
         int localPlayerIndex = -1;
         if (myUsername != null) {
@@ -160,7 +153,7 @@ public class GameView extends Panel {
             // 360 deg is 2 * PI, ZERO DEGREES POINTS TO THE RIGHT!!!
             double angle = Math.PI/2 + ((Math.PI*2)-spaceForOthers)/2 + (spaceForOthers / numSlots * playerPosition);
             // WARNING! this calculation sends an incorrect value for position 0, but it is ignored by the method
-            layoutPlayer(available, claimedThisPass, player, angle, i == localPlayerIndex);
+            layoutPlayer(available, player, angle, i == localPlayerIndex);
         }
         // check if any player has got rid of all cards and left the game
         playerHands.entrySet().removeIf(h -> {
@@ -190,10 +183,11 @@ public class GameView extends Panel {
         if (wastePileSize > 0) {
             int stackHeightWaste = CardImageManager.cardHeight + (Math.min(wastePileSize, 3) - 1) * padding;
             int yStartWaste = Math.min(lowestY - stackHeightWaste, centerY - stackHeightWaste / 2);
+            List<UICard> existingWasteUiCards = deckAndWasteUICards.stream().filter(c -> c.getLocation() == CardLocation.WASTE).collect(Collectors.toList());
             for (int i = 0; i < wastePileSize; i++) {
                 Card card = wastePile.get(i);
 
-                UICard wastePileCard = getUICard(available, claimedThisPass, Collections.emptyList(), card, CardLocation.WASTE, true);
+                UICard wastePileCard = getUICard(available, existingWasteUiCards, card, CardLocation.WASTE, true);
                 wastePileCard.setPosition(centerX + padding / 2, yStartWaste);
                 if (i < (wastePileSize - 3)) {
                     yStartWaste = yStartWaste + dip;
@@ -266,7 +260,7 @@ public class GameView extends Panel {
                 height / 2 - XULLoader.adjustSizeToDensity(90));
     }
 
-    private void layoutPlayer(List<UICard> available, Set<UICard> claimedThisPass, Player player, double angle, boolean isLocalPlayer) {
+    private void layoutPlayer(List<UICard> available, Player player, double angle, boolean isLocalPlayer) {
         int centerX = width / 2;
         int centerY = height / 2;
         int radiusX = getRadiusX();
@@ -293,19 +287,19 @@ public class GameView extends Panel {
         available.addAll(0, getUnusedCards(oldHandUiCards, player.getHand()));
 
         List<UICard> downUiCards = player.getDowncards().stream()
-                .map(card -> getUICard(available, claimedThisPass, oldDownUiCards, card, CardLocation.DOWN_CARDS, false))
+                .map(card -> getUICard(available, oldDownUiCards, card, CardLocation.DOWN_CARDS, false))
                 .collect(Collectors.toList());
         oldDownUiCards.removeAll(downUiCards);
         available.addAll(0, oldDownUiCards);
 
         List<UICard> handUiCards = player.getHand().stream()
-                .map(card -> getUICard(available, claimedThisPass, oldHandUiCards, card, CardLocation.HAND, isLocalPlayer))
+                .map(card -> getUICard(available, oldHandUiCards, card, CardLocation.HAND, isLocalPlayer))
                 .collect(Collectors.toList());
         oldHandUiCards.removeAll(handUiCards);
         available.addAll(0, oldHandUiCards);
 
         List<UICard> upUiCards = player.getUpcards().stream()
-                .map(card -> getUICard(available, claimedThisPass, oldUpUiCards, card, CardLocation.UP_CARDS, true))
+                .map(card -> getUICard(available, oldUpUiCards, card, CardLocation.UP_CARDS, true))
                 .collect(Collectors.toList());
         oldUpUiCards.removeAll(upUiCards);
         available.addAll(0, oldUpUiCards);
@@ -359,70 +353,37 @@ public class GameView extends Panel {
         }
     }
 
-    private UICard getUICard(List<UICard> available, Set<UICard> claimedThisPass, List<UICard> currentHandCardsAtLocation, Card card, CardLocation location, boolean isFaceUp) {
-        UICard uiCard = null;
-
-        // Prefer a UICard already at this location for this card (by identity).
-        // This is critical when the same Card singleton appears multiple times (multi-deck): the
-        // global map can only track one UICard per singleton, so we'd otherwise steal a UICard that
-        // belongs to a different player or a different slot in the same player's hand.
-        if (card != null) {
-            Optional<UICard> existing = currentHandCardsAtLocation.stream()
-                    .filter(c -> c.getCard() == card && !claimedThisPass.contains(c))
-                    .findFirst();
-            if (existing.isPresent()) {
-                uiCard = existing.get();
-                currentHandCardsAtLocation.remove(uiCard);
-            }
+    private UICard getUICard(List<UICard> available, List<UICard> currentHandCardsAtLocation, Card card, CardLocation location, boolean isFaceUp) {
+        // Prefer a UICard already at this location for this card, matched by identity (==).
+        // Using identity (not equals) means each Card object — even singletons shared across decks —
+        // maps to its own UICard positionally, preventing cross-player contamination.
+        UICard uiCard = currentHandCardsAtLocation.stream()
+                .filter(c -> c.getCard() == card)
+                .findFirst().orElse(null);
+        if (uiCard != null) {
+            currentHandCardsAtLocation.remove(uiCard);
         }
 
-        if (uiCard == null) {
-            // Fall back to the global map — useful for cards that changed location (e.g. played to waste)
-            uiCard = cardToUICard.get(card);
+        if (uiCard == null && !available.isEmpty()) {
+            // prefer exact identity match, fall back to a spare null (deck) card
+            uiCard = available.stream().filter(c -> c.getCard() == card).findFirst().orElseGet(
+                    () -> available.stream().filter(c -> c.getCard() == null).findFirst().orElse(null));
             if (uiCard != null) {
-                // the UICard may also be in available (e.g. its card instance changed identity on a
-                // state refresh); reclaim it so it isn't double-assigned to a second card
                 available.remove(uiCard);
-                // if already claimed this pass (another occurrence of the same singleton), fall through
-                if (claimedThisPass.contains(uiCard)) {
-                    uiCard = null;
-                }
             }
         }
 
         if (uiCard == null) {
-            // if this card is unknown, maybe we can find an existing unknown card at this location, then just use that card
-            if (card == null) {
-                Optional<UICard> currentCard = currentHandCardsAtLocation.stream().filter(uic -> uic.getCard() == null).findFirst();
-                if (currentCard.isPresent()) {
-                    currentHandCardsAtLocation.remove(currentCard.get());
-                    uiCard = currentCard.get();
-                }
-            }
-
+            uiCard = StreamSupport.stream(((Iterable<UICard>) () -> new ReverseListIterator<>(deckAndWasteUICards)).spliterator(), false)
+                    .filter(c -> c.getLocation() == CardLocation.DECK).findFirst().orElse(null);
             if (uiCard == null) {
-                if (!available.isEmpty()) {
-                    uiCard = available.stream().filter(c -> c.getCard() == card).findFirst().orElseGet(
-                            () -> available.stream().filter(c -> c.getCard() == null).findFirst().orElse(null)
-                    );
-                    if (uiCard != null) {
-                        available.remove(uiCard);
-                    }
-                }
-                if (uiCard == null) {
-                    uiCard = StreamSupport.stream(((Iterable<UICard>) () -> new ReverseListIterator<>(deckAndWasteUICards)).spliterator(), false)
-                            .filter(c -> c.getLocation() == CardLocation.DECK).findFirst().orElse(null);
-                    if (uiCard == null) {
-                        // dealing a brand new card, this should ONLY happen at the start of the game
-                        System.out.println("Dealing new card on table (ONLY AT START OF GAME)");
-                        uiCard = new UICard();
-                    }
-                }
+                // dealing a brand new card, this should ONLY happen at the start of the game
+                System.out.println("Dealing new card on table (ONLY AT START OF GAME)");
+                uiCard = new UICard();
             }
         }
 
         updateCardInfo(uiCard, card, location, isFaceUp);
-        claimedThisPass.add(uiCard);
         return uiCard;
     }
 
@@ -441,9 +402,6 @@ public class GameView extends Panel {
         uiCard.setPlayable(false);
         uiCard.setLocation(location);
         uiCard.setFaceUp(isFaceUp);
-        if (card != null) {
-            cardToUICard.put(card, uiCard);
-        }
     }
 
     @Override
