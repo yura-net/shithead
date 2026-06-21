@@ -60,6 +60,10 @@ public class GameView extends Panel {
         repaint();
     }
 
+    List<UICard> getDeckCards() {
+        return deckAndWasteUICards.stream().filter(c -> c.getLocation() == CardLocation.DECK).collect(Collectors.toList());
+    }
+
     PlayerHand getPlayerHand(String username) {
         return playerHands.get(game.getPlayer(username));
     }
