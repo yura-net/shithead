@@ -151,13 +151,6 @@ public class UICard {
         return y;
     }
 
-    public int getTargetX() {
-        return targetX;
-    }
-
-    public int getTargetY() {
-        return targetY;
-    }
 
     public boolean animate() {
         boolean more = false;
