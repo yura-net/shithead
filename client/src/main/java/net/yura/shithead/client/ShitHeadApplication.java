@@ -42,14 +42,15 @@ import javax.microedition.lcdui.Image;
 
 public class ShitHeadApplication extends Application implements ActionListener {
 
-    private static final String SINGLE_PLAYER_NAME = "Player 1";
+    static final String SINGLE_PLAYER_NAME = "Player 1";
 
     static final Border background = new EdgeToEdgeBorder(new BackgroundBorder(createImageNoScale("/table.jpg")));
     final CommandParser parser = new CommandParser();
 
     private Properties properties;
 
-    private ShitheadGame singlePlayerGame;
+    ShitheadGame singlePlayerGame;
+    GameUI singlePlayerGameUI;
 
     private MiniLobbyClient minilobby;
     Game pendingOpenGame;
@@ -222,7 +223,7 @@ public class ShitHeadApplication extends Application implements ActionListener {
         frame.repaint();
     }
 
-    private void createNewSinglePlayerGame(int numPlayers, int numDecks, boolean sevenGoLow) {
+    protected void createNewSinglePlayerGame(int numPlayers, int numDecks, boolean sevenGoLow) {
 
         ShitheadGame singlePlayerGame = new ShitheadGame(numPlayers, numDecks);
         singlePlayerGame.setSevenGoLow(sevenGoLow);
@@ -239,7 +240,7 @@ public class ShitHeadApplication extends Application implements ActionListener {
         openSinglePlayerGame(singlePlayerGame);
     }
 
-    private void openSinglePlayerGame(ShitheadGame game) {
+    protected void openSinglePlayerGame(ShitheadGame game) {
         this.singlePlayerGame = game;
 
         final GameUI gameUI = new GameUI(properties, singlePlayerGame, new ActionListener() {
@@ -254,10 +255,12 @@ public class ShitHeadApplication extends Application implements ActionListener {
             }
         });
         gameUI.setMyUsername(SINGLE_PLAYER_NAME);
+        singlePlayerGameUI = gameUI;
         gameUI.closeActionListener = new ActionListener() {
             @Override
             public void actionPerformed(String actionCommand) {
                 singlePlayerGame = null;
+                singlePlayerGameUI = null;
             }
         };
 
@@ -266,7 +269,7 @@ public class ShitHeadApplication extends Application implements ActionListener {
         }
     }
 
-    private void doAITurn() {
+    protected void doAITurn() {
         ShitheadGame game = singlePlayerGame;
         Player me = game.getPlayer(SINGLE_PLAYER_NAME);
         new Thread() {

@@ -1,10 +1,11 @@
 package net.yura.shithead.client;
 
 import net.yura.cardsengine.Card;
+import net.yura.cardsengine.Deck;
+import net.yura.mobile.gui.Application;
 import net.yura.mobile.gui.DesktopPane;
-import net.yura.mobile.util.Properties;
+import net.yura.mobile.util.RemoteTest;
 import net.yura.shithead.common.AutoPlay;
-import net.yura.shithead.common.CommandParser;
 import net.yura.shithead.common.Player;
 import net.yura.shithead.common.ShitheadGame;
 import net.yura.shithead.uicomponents.CardImageManager;
@@ -15,8 +16,8 @@ import net.yura.shithead.uicomponents.UICard;
 import org.junit.jupiter.api.Test;
 
 import java.awt.EventQueue;
-import java.util.Arrays;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -25,76 +26,88 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class GameUIPlayTest {
 
-    private static final String MY_PLAYER = "Player 1";
+    private static final String MY_PLAYER = ShitHeadApplication.SINGLE_PLAYER_NAME;
+
+    public static class TestApp extends ShitHeadApplicationTest.TestApp {
+
+        @Override
+        protected void createNewSinglePlayerGame(int numPlayers, int numDecks, boolean sevenGoLow) {
+            // Use a fixed random seed so the game is deterministic regardless of which tests
+            // ran before this one. Two players keeps the game short.
+            Deck deck = new Deck(1);
+            deck.setRandom(new Random(42L));
+            ShitheadGame game = new ShitheadGame(2, deck);
+            game.setSevenGoLow(sevenGoLow);
+            game.deal();
+
+            Player me = game.getPlayer(SINGLE_PLAYER_NAME);
+            for (Player player : game.getPlayers()) {
+                if (me != player) {
+                    game.playerReady(player);
+                }
+            }
+
+            openSinglePlayerGame(game);
+        }
+
+        @Override
+        protected void doAITurn() {
+            ShitheadGame game = singlePlayerGame;
+            if (game == null) return;
+            Player me = game.getPlayer(SINGLE_PLAYER_NAME);
+            while (singlePlayerGame != null && !game.isFinished() && game.isPlaying() && game.getCurrentPlayer() != me) {
+                parser.parse(game, AutoPlay.getValidGameCommand(game));
+            }
+        }
+    }
 
     @Test
     public void playGameToEnd() throws Exception {
-        // Boot the SwingME framework so fonts, images, and DesktopPane are ready.
-        HeadlessRunner.runApplication(ShitHeadApplicationTest.TestApp.class);
+        HeadlessRunner.runApplication(TestApp.class);
         await().atMost(5, TimeUnit.SECONDS).until(() -> !DesktopPane.getDesktopPane().getAllFrames().isEmpty());
         EventQueue.invokeAndWait(new Thread());
 
-        // Create a 2-player game directly (fewer players = faster game).
-        ShitheadGame game = new ShitheadGame(Arrays.asList(MY_PLAYER, "AI"));
-        game.deal();
+        // Navigate to the game setup screen via the "Single Player" button.
+        assertTrue(RemoteTest.clickText(DesktopPane.getDesktopPane().getSelectedFrame(), "Single Player"));
 
-        // Skip the card-rearranging phase: mark both players as ready immediately.
-        game.playerReady(game.getPlayer("AI"));
-        game.playerReady(game.getPlayer(MY_PLAYER)); // triggers game start once everyone is ready
-
-        Properties properties = new Properties() {
-            @Override
-            public String getProperty(String key) {
-                return key; // return key as value; sufficient for headless testing
-            }
-        };
-
-        // Use a one-element array so the command-listener lambda can reference gameUI.
-        GameUI[] ref = new GameUI[1];
-        CommandParser parser = new CommandParser();
-
-        ref[0] = new GameUI(properties, game, command -> {
-            parser.parse(game, command);
-            ref[0].gameView.doLayout(); // force immediate layout so isPlayable/isWaiting are current
-        });
-        ref[0].setMyUsername(MY_PLAYER);
-
-        GameUI gameUI = ref[0];
-        GameView gameView = gameUI.gameView;
-
-        // Allow the initial layout pass to complete.
-        gameView.doLayout();
+        // Wait for the game setup dialog (a second frame) to appear.
+        await().atMost(5, TimeUnit.SECONDS).until(() -> DesktopPane.getDesktopPane().getAllFrames().size() >= 2);
         EventQueue.invokeAndWait(new Thread());
 
-        int maxTurns = 500; // safety guard against infinite loops
+        // Start the game by clicking "Create".
+        assertTrue(RemoteTest.clickText(DesktopPane.getDesktopPane().getSelectedFrame(), "Create"));
+        EventQueue.invokeAndWait(new Thread());
+
+        ShitHeadApplication app = (ShitHeadApplication) Application.getInstance();
+        await().atMost(5, TimeUnit.SECONDS).until(() -> app.singlePlayerGame != null);
+
+        ShitheadGame game = app.singlePlayerGame;
+        GameView gameView = app.singlePlayerGameUI.gameView;
+        gameView.doLayout();
+
+        // Click "Ready" to end the card-rearranging phase for our player.
+        if (game.isRearranging()) {
+            assertTrue(RemoteTest.clickText(gameView, "Ready"));
+            EventQueue.invokeAndWait(new Thread());
+        }
+
+        int maxTurns = 2000;
         while (!game.isFinished() && maxTurns-- > 0) {
             if (!game.isPlaying()) break;
-
             Player current = game.getCurrentPlayer();
             if (current == null) break;
 
             if (MY_PLAYER.equals(current.getName())) {
-                // Force layout so isWaitingForInput and isPlayable flags are current.
                 gameView.doLayout();
-                // Advance card animations so UICard.getX/getY reflect laid-out positions.
                 settleAnimations(gameView, game);
-                playTurnViaUI(game, gameView, gameUI);
-            } else {
-                // AI turn: compute and apply best move directly via the parser.
-                parser.parse(game, AutoPlay.getValidGameCommand(game));
-                gameView.doLayout();
+                playTurnViaUI(game, gameView);
+                EventQueue.invokeAndWait(new Thread());
             }
-
-            EventQueue.invokeAndWait(new Thread());
         }
 
         assertTrue(game.isFinished(), "Game should have finished within the turn limit");
     }
 
-    /**
-     * Drives UICard animations to completion so that UICard.getX()/getY() match the
-     * laid-out positions and hit-testing via contains() works correctly.
-     */
     private void settleAnimations(GameView gameView, ShitheadGame game) {
         for (int step = 0; step < 200; step++) {
             boolean moving = false;
@@ -113,15 +126,11 @@ class GameUIPlayTest {
         }
     }
 
-    /**
-     * Simulates the human player's turn by clicking on an appropriate card in the GameView.
-     */
-    private void playTurnViaUI(ShitheadGame game, GameView gameView, GameUI gameUI) {
+    private void playTurnViaUI(ShitheadGame game, GameView gameView) {
         Player player = game.getPlayer(MY_PLAYER);
         PlayerHand hand = gameView.getPlayerHand(MY_PLAYER);
 
         if (player.getHand().isEmpty() && player.getUpcards().isEmpty()) {
-            // Only face-down cards remain; click the first one.
             List<UICard> downcards = hand.getUiCards(CardLocation.DOWN_CARDS);
             if (!downcards.isEmpty()) {
                 clickCard(gameView, downcards.get(0));
@@ -132,20 +141,17 @@ class GameUIPlayTest {
         List<Card> best = AutoPlay.findBestVisibleCards(game);
 
         if (!best.isEmpty()) {
-            // Find the UICard for the best playable card and click it.
             for (UICard uiCard : hand.getUiCards()) {
                 if (best.get(0).equals(uiCard.getCard())) {
                     clickCard(gameView, uiCard);
-                    // When there are multiple cards of the same rank, clicking selects
-                    // rather than plays immediately.  Fire the play button to submit.
+                    // Clicking may select rather than immediately play; submit if so.
                     if (!gameView.getSelectedCards().isEmpty()) {
-                        gameUI.actionPerformed("play");
+                        RemoteTest.clickText(gameView, "Play");
                     }
                     return;
                 }
             }
         } else if (!game.getDeck().getCards().isEmpty()) {
-            // No visible card is playable; play blind from the deck.
             List<UICard> deckCards = gameView.getDeckAndWasteCards().stream()
                     .filter(c -> c.getLocation() == CardLocation.DECK)
                     .collect(Collectors.toList());
@@ -153,21 +159,23 @@ class GameUIPlayTest {
                 clickCard(gameView, deckCards.get(0));
             }
         } else {
-            // Deck is also empty; must pick up the waste pile.
             List<UICard> wasteCards = gameView.getDeckAndWasteCards().stream()
                     .filter(c -> c.getLocation() == CardLocation.WASTE)
                     .collect(Collectors.toList());
             if (!wasteCards.isEmpty()) {
-                // Click the topmost waste card (last in list).
                 clickCard(gameView, wasteCards.get(wasteCards.size() - 1));
             }
         }
     }
 
-    /** Fires a RELEASED mouse event at the centre of the given UICard. */
     private void clickCard(GameView gameView, UICard uiCard) {
         int cx = uiCard.getX() + CardImageManager.cardWidth / 2;
-        int cy = uiCard.getY() + CardImageManager.cardHeight / 2;
+        // Click near the top of the card rather than the center. In the multi-row hand
+        // layout, rows are spaced cardHeight/2 apart and vertically overlap. Clicking at
+        // the center hits the row below (which has a higher list index and thus wins
+        // the reverse-order hit-test). Clicking near the top stays in the unique upper
+        // portion of this card's row, so the correct card is targeted.
+        int cy = uiCard.getY() + 1;
         gameView.processMouseEvent(DesktopPane.RELEASED, cx, cy, null);
     }
 }
