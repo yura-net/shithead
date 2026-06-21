@@ -143,6 +143,11 @@ public class UICard {
     public boolean moving() {
         return x != targetX || y != targetY;
     }
+
+    public int getX() {
+        return x;
+    }
+
     public int getY() {
         return y;
     }
