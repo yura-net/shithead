@@ -28,10 +28,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
  */
 class GameViewTest {
 
-    // Card size at density 1 (no "large"/"xlarge" display.size system property)
-    private static final int CARD_W = 44;
-    private static final int CARD_H = 80;
-
     // X offsets of 3 cards relative to their hand centre (spacing=2 between cards)
     // handWidth = 3*44 + 2*2 = 136, startX = -136/2 = -68, step = CARD_W+2 = 46
     private static final int[] THREE_CARD_X_OFFSETS = { -68, -22, 24 };
@@ -54,10 +50,10 @@ class GameViewTest {
     //               = 560 - 2 - 0 - 80 - 20 - 40 + 60 = 478
     // yCardsStart   = 478 - 60 = 418
     // -------------------------------------------------------------------------
-    private static final int ALICE_CX     = 160;  // screen centre X
-    private static final int ALICE_Y_DOWN = 418;
-    private static final int ALICE_Y_UP   = 438;  // 418 + LAYER_GAP
-    private static final int ALICE_Y_HAND = 478;  // 418 + LAYER_GAP + CARD_H/2 (not-yet-ready offset)
+    private static final int LOCAL_PLAYER_CX = 160;  // screen centre X
+    private static final int LOCAL_PLAYER_Y_DOWN = 418;
+    private static final int LOCAL_PLAYER_Y_UP = 438;  // 418 + LAYER_GAP
+    private static final int LOCAL_PLAYER_Y_HAND = 478;  // 418 + LAYER_GAP + CARD_H/2 (not-yet-ready offset)
 
     // -------------------------------------------------------------------------
     // Remote player hand centres for a 5-player game on 320x560
@@ -110,7 +106,7 @@ class GameViewTest {
 
         // Local player
         assertPlayerCards("alice", view.getPlayerHand("alice"),
-                ALICE_CX, ALICE_Y_DOWN, ALICE_Y_UP, ALICE_Y_HAND);
+                LOCAL_PLAYER_CX, LOCAL_PLAYER_Y_DOWN, LOCAL_PLAYER_Y_UP, LOCAL_PLAYER_Y_HAND);
 
         // Remote players
         for (int i = 0; i < REMOTE_NAMES.length; i++) {
@@ -120,9 +116,10 @@ class GameViewTest {
         }
 
         // Deck
-        List<UICard> deckCards = view.getDeckCards();
+        List<UICard> deckCards = view.getDeckAndWasteCards();
         assertEquals(3, deckCards.size(), "deck visible card count");
         for (int i = 0; i < deckCards.size(); i++) {
+            assertEquals(CardLocation.DECK, deckCards.get(i).getLocation());
             assertCardAt("deck[" + i + "]", deckCards.get(i), DECK_X, DECK_YS[i]);
         }
     }

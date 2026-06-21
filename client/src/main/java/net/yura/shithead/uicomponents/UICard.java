@@ -143,6 +143,7 @@ public class UICard {
     public boolean moving() {
         return x != targetX || y != targetY;
     }
+
     public int getX() {
         return x;
     }
@@ -150,7 +151,6 @@ public class UICard {
     public int getY() {
         return y;
     }
-
 
     public boolean animate() {
         boolean more = false;
