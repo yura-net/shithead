@@ -60,7 +60,7 @@ public class GameView extends Panel {
         repaint();
     }
 
-    private PlayerHand getPlayerHand(String username) {
+    PlayerHand getPlayerHand(String username) {
         return playerHands.get(game.getPlayer(username));
     }
 

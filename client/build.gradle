@@ -8,7 +8,7 @@ java {
 }
 
 dependencies {
-    implementation rootProject
+    api rootProject
     api 'org.swingme:swingme:1.9.0'
     implementation 'org.apache.commons:commons-collections4:4.5.0'
     api 'net.yura:lobby-client-mini-ui:1.1.0'

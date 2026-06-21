@@ -143,8 +143,20 @@ public class UICard {
     public boolean moving() {
         return x != targetX || y != targetY;
     }
+    public int getX() {
+        return x;
+    }
+
     public int getY() {
         return y;
+    }
+
+    public int getTargetX() {
+        return targetX;
+    }
+
+    public int getTargetY() {
+        return targetY;
     }
 
     public boolean animate() {
