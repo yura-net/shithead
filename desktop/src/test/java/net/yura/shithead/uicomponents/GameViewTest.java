@@ -14,14 +14,16 @@ import org.junit.jupiter.api.Test;
 import java.awt.EventQueue;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Objects;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
 import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -269,83 +271,78 @@ class GameViewTest {
     }
 
     @Test
-    void testGetUnusedCards_Exception() {
+    void testGetUnusedCards_DoesNotReturnSameNullCardTwice() {
         Card c1 = SerializerUtil.cardFromString("7H");
+
         UICard ui1 = new UICard(c1, CardLocation.HAND, true, 0, 0);
-        List<UICard> source = new ArrayList<>(Arrays.asList(ui1));
-        // We have 1 card in source (ui1), and actual has 2 cards.
-        // The logic expects actual.size() <= source.size() - available.size()
-        // Wait, the while loop is: while (actual.size() < source.size() - available.size())
-        // That means it removes extra cards from source if actual is smaller.
-        // If actual is LARGER, the loop won't run.
+        UICard uiNull1 = new UICard(null, CardLocation.DECK, false, 0, 0);
+        UICard uiNull2 = new UICard(null, CardLocation.DECK, false, 0, 0);
 
-        // Let's re-read the code:
-        // List<UICard> available = source.stream().filter(c -> c.getCard() != null && !actual.contains(c.getCard())).collect(Collectors.toList());
-        // while (actual.size() < source.size() - available.size()) {
-        //     available.add(source.stream().filter(c -> c.getCard() == null).findFirst().orElseThrow(() -> new IllegalStateException("no null cards found in: " + source)));
-        // }
-        // source.removeAll(available);
-
-        // Case where it throws: actual.size() < source.size() - available.size() AND no null cards in source.
-        // source = [ui1(7H)], actual = [], available = [ui1]
-        // actual.size() = 0, source.size() - available.size() = 1 - 1 = 0. 0 < 0 is false.
-
-        // Try: source = [ui1(7H), ui2(8H)], actual = [7H], available = [ui2]
-        // actual.size() = 1, source.size() - available.size() = 2 - 1 = 1. 1 < 1 is false.
-
-        // Try: source = [ui1(7H)], actual = [null]
-        // available = []
-        // actual.size() = 1, source.size() - available.size() = 1 - 0 = 1. 1 < 1 is false.
-
-        // Try: source = [ui1(7H)], actual = [null, null]
-        // available = []
-        // actual.size() = 2, source.size() - available.size() = 1. 2 < 1 is false.
-
-        // Wait, the loop condition is `actual.size() < source.size() - available.size()`.
-        // This means if we have MORE cards in source (after removing definitely unused ones) than in actual,
-        // we must remove some more, which MUST be null cards.
-
-        // source = [ui1(7H), ui2(8H)], actual = []
-        // available = [ui1, ui2]
-        // actual.size() = 0, source.size() - available.size() = 2 - 2 = 0. Loop doesn't run.
-
-        // source = [uiNull1], actual = []
-        // available = []
-        // actual.size() = 0, source.size() - available.size() = 1 - 0 = 1.
-        // 0 < 1 is TRUE.
-        // Loop runs: available.add(uiNull1)
-        // result = [uiNull1], source = []
-
-        // To trigger exception:
-        // actual.size() < source.size() - available.size() AND no null cards.
-        // source = [ui1(7H)], actual = [null]
-        // available = [] (c1 is not null, but is NOT in actual, wait... actual is [null])
-        // c1 is 7H, actual is [null]. actual.contains(c1) is false.
-        // available = [ui1]
-        // 1 < 1 - 1 = 0. False.
-
-        // Let's try:
-        // source = [ui1(7H), ui2(8H)], actual = [7H, null]
-        // available = [ui2]
-        // 2 < 2 - 1 = 1. False.
-
-        // It seems it only throws if we have too many KNOWN cards that ARE in actual?
-        // No, `available` already contains cards that are NOT in actual.
-        // So `source.size() - available.size()` are the cards in source that ARE in actual (or are null).
-        // If that number is > actual.size(), it means we have more UICards for these cards than actual cards.
-        // This can only happen if we have multiple UICards for the same Card (shouldn't happen) or multiple null UICards.
-
-        // If source = [ui1(7H), ui2(7H)], actual = [7H]
-        // available = [] (because 7H is in actual)
-        // 1 < 2 - 0 = 2. TRUE.
-        // It tries to find a null card to remove. But there are none. Throws!
-
-        List<UICard> source2 = new ArrayList<>(Arrays.asList(
-                new UICard(c1, CardLocation.HAND, true, 0, 0),
-                new UICard(c1, CardLocation.HAND, true, 0, 0)
+        List<UICard> source = new ArrayList<>(Arrays.asList(
+                ui1,
+                uiNull1,
+                uiNull2
         ));
-        List<Card> actual2 = Arrays.asList(c1);
 
-        assertThrows(IllegalStateException.class, () -> GameView.getUnusedCards(source2, actual2));
+        List<Card> actual = Collections.singletonList(c1);
+
+        List<UICard> result = GameView.getUnusedCards(source, actual);
+
+        assertEquals(2, result.size());
+
+        // should contain both null cards
+        assertTrue(result.contains(uiNull1));
+        assertTrue(result.contains(uiNull2));
+
+        // should not contain duplicates
+        assertEquals(2, new HashSet<>(result).size());
+    }
+
+    @Test
+    void testGetUnusedCardsCountsDuplicateSingletonCardsSeparately() {
+        List<Card> cards = new ArrayList<>(new Deck(3).getCards());
+        Card duplicateCard = cards.stream()
+                .filter(card -> cards.stream().filter(other -> other == card).count() >= 3)
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("no card with three copies found"));
+        Card otherCard = cards.stream()
+                .filter(card -> card != duplicateCard)
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("no other card found"));
+
+        List<UICard> source = new ArrayList<>(Arrays.asList(
+                new UICard(duplicateCard, CardLocation.HAND, true, 0, 0),
+                new UICard(duplicateCard, CardLocation.HAND, true, 0, 0),
+                new UICard(duplicateCard, CardLocation.HAND, true, 0, 0),
+                new UICard(otherCard, CardLocation.HAND, true, 0, 0)));
+        List<Card> actual = Arrays.asList(duplicateCard, duplicateCard, otherCard);
+
+        List<UICard> available = GameView.getUnusedCards(source, actual);
+
+        assertEquals(1, available.size(), "one duplicate should be unused");
+        assertEquals(duplicateCard, available.get(0).getCard(), "unused card");
+        assertEquals(3, source.size(), "remaining source cards");
+    }
+
+    @Test
+    void testGetUnusedCards_DuplicateUICard_OrderMatters() {
+        Card c7H = SerializerUtil.cardFromString("7H");
+        Card c8S = SerializerUtil.cardFromString("8S");
+
+        // KEY: 8S comes FIRST in the list, then the two 7H duplicates
+        UICard ui8S = new UICard(c8S, CardLocation.HAND, true, 0, 0);
+        UICard ui7H_1 = new UICard(c7H, CardLocation.HAND, true, 0, 0);
+        UICard ui7H_2 = new UICard(c7H, CardLocation.HAND, true, 0, 0);
+
+        List<UICard> source = new ArrayList<>(Arrays.asList(ui8S, ui7H_1, ui7H_2));
+        List<Card> actual = Arrays.asList(c7H, c8S); // one of each
+
+        List<UICard> result = GameView.getUnusedCards(source, actual);
+
+        assertEquals(1, result.size());
+        // The freed card must be the duplicate 7H, not the 8S
+        assertEquals(c7H, result.get(0).getCard());
+        // 8S must still be in source
+        assertTrue(source.stream().anyMatch(c -> Objects.equals(c8S, c.getCard())));
     }
 }
