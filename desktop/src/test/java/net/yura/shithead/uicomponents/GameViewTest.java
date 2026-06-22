@@ -101,8 +101,23 @@ class GameViewTest {
 
     @Test
     void testInitialCardPositionsAfterAnimation() throws Exception {
-        ShitheadGame game = newGame(1);
-        assertLayout(game);
+        assertLayout(newGame(1));
+    }
+
+    /**
+     * With two decks the deck is larger but each player still holds 3 down/up/hand cards, so
+     * all pixel positions are identical to the single-deck case.  The important thing this test
+     * checks is that duplicate cards (same rank+suit from each deck) each get their own UICard
+     * and end up at the correct, distinct position.
+     */
+    @Test
+    void testInitialCardPositionsAfterAnimation_twoDecks() throws Exception {
+        assertLayout(newGame(2));
+    }
+
+    @Test
+    void testInitialCardPositionsAfterAnimation_threeDecks() throws Exception {
+        assertLayout(newGame(3));
     }
 
     private static ShitheadGame newGame(int decks) {

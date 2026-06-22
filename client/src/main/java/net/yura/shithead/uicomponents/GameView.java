@@ -14,7 +14,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -29,7 +28,6 @@ public class GameView extends Panel {
     private String myUsername;
     private String title;
     private final List<UICard> deckAndWasteUICards = new ArrayList<UICard>();
-    private final Map<Card, UICard> cardToUICard = new HashMap<>();
     private final Map<Player, PlayerHand> playerHands = new HashMap<Player, PlayerHand>();
 
     private final int padding = XULLoader.adjustSizeToDensity(2);
@@ -185,10 +183,11 @@ public class GameView extends Panel {
         if (wastePileSize > 0) {
             int stackHeightWaste = CardImageManager.cardHeight + (Math.min(wastePileSize, 3) - 1) * padding;
             int yStartWaste = Math.min(lowestY - stackHeightWaste, centerY - stackHeightWaste / 2);
+            List<UICard> existingWasteUiCards = deckAndWasteUICards.stream().filter(c -> c.getLocation() == CardLocation.WASTE).collect(Collectors.toList());
             for (int i = 0; i < wastePileSize; i++) {
                 Card card = wastePile.get(i);
 
-                UICard wastePileCard = getUICard(available, Collections.emptyList(), card, CardLocation.WASTE, true);
+                UICard wastePileCard = getUICard(available, existingWasteUiCards, card, CardLocation.WASTE, true);
                 wastePileCard.setPosition(centerX + padding / 2, yStartWaste);
                 if (i < (wastePileSize - 3)) {
                     yStartWaste = yStartWaste + dip;
@@ -352,34 +351,31 @@ public class GameView extends Panel {
     }
 
     private UICard getUICard(List<UICard> available, List<UICard> currentHandCardsAtLocation, Card card, CardLocation location, boolean isFaceUp) {
-        UICard uiCard = cardToUICard.get(card);
+        // Prefer a UICard already at this location for this card, matched by value (equals).
+        // Searching positionally within each player's own list means Card singletons shared across
+        // decks each get their own UICard without cross-player contamination.
+        UICard uiCard = currentHandCardsAtLocation.stream().filter(c -> c.getCard() == card).findFirst().orElse(null);
+        if (uiCard != null) {
+            currentHandCardsAtLocation.remove(uiCard);
+        }
+
         if (uiCard == null) {
-            // if this card is unknown, maybe we can find an existing unknown card at this location, then just use that card
-            if (card == null) {
-                Optional<UICard> currentCard = currentHandCardsAtLocation.stream().filter(uic -> uic.getCard() == null).findFirst();
-                if (currentCard.isPresent()) {
-                    currentHandCardsAtLocation.remove(currentCard.get());
-                    uiCard = currentCard.get();
+            if (!available.isEmpty()) {
+                // prefer exact value match, fall back to a spare null (deck) card
+                uiCard = available.stream().filter(c -> c.getCard() == card).findFirst().orElseGet(
+                        () -> available.stream().filter(c -> c.getCard() == null).findFirst().orElse(null)
+                );
+                if (uiCard != null) {
+                    available.remove(uiCard);
                 }
             }
-
             if (uiCard == null) {
-                if (!available.isEmpty()) {
-                    uiCard = available.stream().filter(c -> c.getCard() == card).findFirst().orElseGet(
-                            () -> available.stream().filter(c -> c.getCard() == null).findFirst().orElse(null)
-                    );
-                    if (uiCard != null) {
-                        available.remove(uiCard);
-                    }
-                }
+                uiCard = StreamSupport.stream(((Iterable<UICard>) () -> new ReverseListIterator<>(deckAndWasteUICards)).spliterator(), false)
+                        .filter(c -> c.getLocation() == CardLocation.DECK).findFirst().orElse(null);
                 if (uiCard == null) {
-                    uiCard = StreamSupport.stream(((Iterable<UICard>) () -> new ReverseListIterator<>(deckAndWasteUICards)).spliterator(), false)
-                            .filter(c -> c.getLocation() == CardLocation.DECK).findFirst().orElse(null);
-                    if (uiCard == null) {
-                        // dealing a brand new card, this should ONLY happen at the start of the game
-                        System.out.println("Dealing new card on table (ONLY AT START OF GAME)");
-                        uiCard = new UICard();
-                    }
+                    // dealing a brand new card, this should ONLY happen at the start of the game
+                    System.out.println("Dealing new card on table (ONLY AT START OF GAME)");
+                    uiCard = new UICard();
                 }
             }
         }
@@ -402,9 +398,6 @@ public class GameView extends Panel {
         uiCard.setPlayable(false);
         uiCard.setLocation(location);
         uiCard.setFaceUp(isFaceUp);
-        if (card != null) {
-            cardToUICard.put(card, uiCard);
-        }
     }
 
     @Override
