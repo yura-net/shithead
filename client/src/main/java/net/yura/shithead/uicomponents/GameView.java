@@ -14,7 +14,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -355,32 +354,31 @@ public class GameView extends Panel {
         // Prefer a UICard already at this location for this card, matched by value (equals).
         // Searching positionally within each player's own list means Card singletons shared across
         // decks each get their own UICard without cross-player contamination.
-        UICard uiCard = currentHandCardsAtLocation.stream()
-                .filter(c -> Objects.equals(c.getCard(), card))
-                .findFirst().orElse(null);
+        UICard uiCard = currentHandCardsAtLocation.stream().filter(c -> c.getCard() == card).findFirst().orElse(null);
         if (uiCard != null) {
             currentHandCardsAtLocation.remove(uiCard);
         }
 
-        if (uiCard == null && !available.isEmpty()) {
-            // prefer exact value match, fall back to a spare null (deck) card
-            uiCard = available.stream().filter(c -> Objects.equals(c.getCard(), card)).findFirst().orElseGet(
-                    () -> available.stream().filter(c -> c.getCard() == null).findFirst().orElse(null));
-            if (uiCard != null) {
-                available.remove(uiCard);
-            }
-        }
-
         if (uiCard == null) {
-            uiCard = StreamSupport.stream(((Iterable<UICard>) () -> new ReverseListIterator<>(deckAndWasteUICards)).spliterator(), false)
-                    .filter(c -> c.getLocation() == CardLocation.DECK).findFirst().orElse(null);
+            if (!available.isEmpty()) {
+                // prefer exact value match, fall back to a spare null (deck) card
+                uiCard = available.stream().filter(c -> c.getCard() == card).findFirst().orElseGet(
+                        () -> available.stream().filter(c -> c.getCard() == null).findFirst().orElse(null)
+                );
+                if (uiCard != null) {
+                    available.remove(uiCard);
+                }
+            }
             if (uiCard == null) {
-                // dealing a brand new card, this should ONLY happen at the start of the game
-                System.out.println("Dealing new card on table (ONLY AT START OF GAME)");
-                uiCard = new UICard();
+                uiCard = StreamSupport.stream(((Iterable<UICard>) () -> new ReverseListIterator<>(deckAndWasteUICards)).spliterator(), false)
+                        .filter(c -> c.getLocation() == CardLocation.DECK).findFirst().orElse(null);
+                if (uiCard == null) {
+                    // dealing a brand new card, this should ONLY happen at the start of the game
+                    System.out.println("Dealing new card on table (ONLY AT START OF GAME)");
+                    uiCard = new UICard();
+                }
             }
         }
-
         updateCardInfo(uiCard, card, location, isFaceUp);
         return uiCard;
     }
@@ -394,7 +392,7 @@ public class GameView extends Panel {
         if (location == CardLocation.DECK || location == CardLocation.WASTE) {
             deckAndWasteUICards.add(uiCard);
         }
-        if (!Objects.equals(card, uiCard.getCard())) {
+        if (card != uiCard.getCard()) {
             uiCard.setCard(card);
         }
         uiCard.setPlayable(false);
