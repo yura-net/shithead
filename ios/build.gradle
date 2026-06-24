@@ -38,6 +38,7 @@ moe {
 dependencies {
     implementation project(':client')
     implementation 'org.swingme:swingme-binding-ios:1.1.0'
+    implementation "net.yura:grasshopper:2.19:ios"
 }
 
 task extractFileFromJar(type: Copy) {

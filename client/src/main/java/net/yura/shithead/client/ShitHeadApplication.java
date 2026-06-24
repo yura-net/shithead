@@ -5,12 +5,14 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.Locale;
 import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.Scanner;
 import java.util.function.Consumer;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
+import net.yura.grasshopper.SimpleBug;
 import net.yura.lobby.client.PushLobbyClient;
 import net.yura.lobby.mini.GameRenderer;
 import net.yura.lobby.mini.MiniLobbyClient;
@@ -53,6 +55,24 @@ public class ShitHeadApplication extends Application implements ActionListener {
 
     private MiniLobbyClient minilobby;
     Game pendingOpenGame;
+
+    public ShitHeadApplication() {
+        try {
+            String product;
+            if (Application.getPlatform() == Application.PLATFORM_IOS) {
+                product = "iOS";
+            } else if (Application.getPlatform() == Application.PLATFORM_ANDROID) {
+                product = "Android";
+            } else {
+                product = "Desktop";
+            }
+            SimpleBug.initLogFile("Shithead-" + product, getVersionString(), Locale.getDefault().toString());
+            Logger.info("grasshopper loaded: " + product);
+        }
+        catch (Throwable th) {
+            Logger.warn("grasshopper not loaded", th);
+        }
+    }
 
     /**
      * create an image without doing any auto scaling
